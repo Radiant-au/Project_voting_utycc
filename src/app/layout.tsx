@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Northstar Nexus | University Exhibition Voting",
-  description: "Explore university projects, cast a demonstration vote, and manage the exhibition."
+  title: "UTYCC Project Exhibition Voting",
+  description: "University of Technology (Yatanarpon Cyber City) project exhibition voting portal."
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {

@@ -1,3 +1,5 @@
-import { ChooseCategoryPage } from '@/features/exhibition/pages/voter/choose-category-page';
+import { redirect } from 'next/navigation';
 
-export default ChooseCategoryPage;
+export default function ChooseCategoryRedirect() {
+  redirect('/');
+}

@@ -3,9 +3,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { BookOpen, Check, FlaskConical, Globe2, Sparkles, UserRound, X } from 'lucide-react';
-import { categoryLabels, pointValues } from '../data/data';
-import type { VoterCategory } from '../data/types';
+import { Check, Sparkles, X } from 'lucide-react';
 
 export const cx = (...parts: Array<string | false | undefined>) => parts.filter(Boolean).join(' ');
 
@@ -32,23 +30,6 @@ export function Toast({ message, onClose }: { message: string; onClose: () => vo
 export function useToastMessage() {
   const [message, setMessage] = useState('');
   return { message, notify: setMessage, clear: () => setMessage('') };
-}
-
-export function VoterHeader({ category }: { category?: VoterCategory }) {
-  return <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6"><Logo /><div className="flex items-center gap-2">{category && <Badge tone="gold">{categoryLabels[category]} · {pointValues[category]} pt</Badge>}<button className="grid h-10 w-10 place-items-center rounded-full bg-secondary text-foreground" aria-label="Profile menu" data-testid="button-profile-menu"><UserRound size={18} /></button></div></header>;
-}
-
-const categoryInfo: Record<VoterCategory, { icon: typeof UserRound; description: string; color: string }> = {
-  student: { icon: BookOpen, description: 'Undergraduate and graduate students', color: 'bg-primary/10 text-primary' },
-  teacher: { icon: FlaskConical, description: 'Faculty and academic staff', color: 'bg-accent/10 text-accent' },
-  visitor: { icon: Globe2, description: 'Guests and exhibition visitors', color: 'bg-[#8f86ff]/15 text-[#b6afff]' },
-};
-
-export function CategoryCard({ category, selected, onClick }: { category: VoterCategory; selected: boolean; onClick: () => void }) {
-  const info = categoryInfo[category]; const Icon = info.icon;
-  return <button onClick={onClick} className={cx('relative flex min-h-36 w-full items-start gap-4 rounded-2xl border-2 p-5 text-left transition duration-200', selected ? 'border-primary bg-primary/8 shadow-[0_8px_22px_hsl(178_48%_35%/.12)]' : 'border-border bg-card hover:-translate-y-0.5 hover:border-primary/50')} data-testid={`card-category-${category}`}>
-    <span className={cx('grid h-11 w-11 shrink-0 place-items-center rounded-xl', info.color)}><Icon size={21} /></span><span><span className="block font-display text-xl font-bold">{categoryLabels[category]}</span><span className="mt-1 block max-w-[220px] text-sm leading-5 text-muted-foreground">{info.description}</span><span className="mt-3 block text-xs font-bold text-primary">{pointValues[category]} point{pointValues[category] > 1 ? 's' : ''} per vote</span></span>{selected && <span className="absolute right-4 top-4 grid h-6 w-6 place-items-center rounded-full bg-primary text-primary-foreground"><Check size={15} strokeWidth={3} /></span>}
-  </button>;
 }
 
 export function Modal({ children, onClose }: { children: ReactNode; onClose: () => void }) {
