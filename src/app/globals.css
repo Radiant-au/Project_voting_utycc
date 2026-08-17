@@ -1409,3 +1409,18 @@ textarea:focus-visible {
     display: none;
   }
 }
+/* Printable visitor credentials are hidden during normal dashboard use. */
+.visitor-passes { display: none; }
+
+@media print {
+  @page { size: A4; margin: 0; }
+  body { background: white !important; }
+  .admin-no-print, aside, header { display: none !important; }
+  .lg\:pl-64 { padding-left: 0 !important; }
+  .visitor-passes { display: block; }
+  .visitor-pass { display: flex; min-height: 100vh; break-after: page; align-items: center; justify-content: center; flex-direction: column; gap: 1.25rem; color: #111; text-align: center; }
+  .visitor-pass:last-child { break-after: auto; }
+  .visitor-pass h1 { font-size: 2rem; font-weight: 800; }
+  .visitor-pass h2 { font-size: 1.5rem; font-weight: 700; }
+  .visitor-pass p { font-size: 1.2rem; }
+}

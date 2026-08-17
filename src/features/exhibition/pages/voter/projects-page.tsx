@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, ShieldCheck } from 'lucide-react';
 import { categoryLabels, pointValues } from '../../data/data';
-import { clearMockPinSession, readMockPinSession, type MockPinSession } from '../../data/pin-session';
+import { clearVoterSession, readVoterSession, type VoterSession } from '../../data/pin-session';
 import { mockServices } from '../../data/services';
 import type { Project } from '../../data/types';
 import { Badge, EmptyState, LoadingCard, cx } from '../../components/ui';
@@ -12,7 +12,7 @@ import { GlassNavbar, GlassProjectCard, GlassVoteBar, VotingPortalLogoutDialog }
 
 export function ProjectsPage() {
   const router = useRouter();
-  const [session, setSession] = useState<MockPinSession | null>();
+  const [session, setSession] = useState<VoterSession | null>();
   const [items, setItems] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
@@ -23,10 +23,9 @@ export function ProjectsPage() {
   const [logout, setLogout] = useState(false);
 
   useEffect(() => {
-    const stored = readMockPinSession();
+    const stored = readVoterSession();
     if (!stored) { router.replace('/'); return; }
     setSession(stored);
-    setVoted(stored.hasVoted || Boolean(localStorage.getItem('exhibition-voted')));
     mockServices.getProjects().then(setItems).finally(() => setLoading(false));
   }, [router]);
 
@@ -34,7 +33,7 @@ export function ProjectsPage() {
     .filter((project) => !project.isArchived && (!query || `${project.title} ${project.teamName} ${project.shortDescription}`.toLowerCase().includes(query.toLowerCase())) && (category === 'All categories' || project.category === category))
     .sort((a, b) => sort === 'A–Z' ? a.title.localeCompare(b.title) : sort === 'Newest' ? b.id.localeCompare(a.id) : 0), [items, query, category, sort]);
   const selectedProject = items.find((project) => project.id === selected);
-  const exit = () => { clearMockPinSession(); router.replace('/'); };
+  const exit = () => { clearVoterSession(); router.replace('/'); };
 
   if (!session || loading) return <main className="utycc-page projects-page"><GlassNavbar category={session?.category} /><div className="mx-auto max-w-6xl px-4 pt-10"><div className="h-10 w-56 animate-pulse rounded-lg bg-white/10" /><div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"><LoadingCard /><LoadingCard /><LoadingCard /></div></div></main>;
 

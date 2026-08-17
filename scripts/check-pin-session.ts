@@ -1,10 +1,15 @@
 import assert from 'node:assert/strict';
-import {
-  PIN_SESSION_KEY,
-  readMockPinSession,
-  saveMockPinSession,
-  verifyVotingPin,
-} from '../src/features/exhibition/data/pin-session.ts';
+
+process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co';
+process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'test-key';
+
+const {
+  VOTER_SESSION_KEY,
+  clearVoterSession,
+  normalizeVotingCode,
+  readVoterSession,
+  saveVoterSession,
+} = await import('../src/features/exhibition/data/pin-session.ts');
 
 const values = new Map<string, string>();
 const storage = {
@@ -13,16 +18,13 @@ const storage = {
   removeItem: (key: string) => values.delete(key),
 };
 
-for (const [pin, category] of [['STU2601', 'student'], ['TCH2602', 'teacher'], ['VST2603', 'visitor']] as const) {
-  const result = await verifyVotingPin(pin);
-  assert.equal(result.ok && result.session.category, category);
-  if (result.ok) saveMockPinSession(result.session, storage);
-  assert.equal(values.get(PIN_SESSION_KEY)?.includes(pin), false);
-}
-
-assert.deepEqual(await verifyVotingPin('BAD0000'), { ok: false, reason: 'invalid' });
-assert.deepEqual(await verifyVotingPin('STU2601', 'used'), { ok: false, reason: 'used' });
-assert.equal((await verifyVotingPin('stu2601')).ok, true);
-values.set(PIN_SESSION_KEY, '{broken');
-assert.equal(readMockPinSession(storage), null);
-console.log('PIN session checks passed');
+assert.equal(normalizeVotingCode(' ab-12_cd34 '), 'AB12CD3');
+saveVoterSession({ code: 'ABC1234', category: 'visitor' }, storage);
+assert.deepEqual(readVoterSession(storage), { code: 'ABC1234', category: 'visitor' });
+assert.equal(values.get(VOTER_SESSION_KEY)?.includes('ABC1234'), true);
+values.set(VOTER_SESSION_KEY, '{broken');
+assert.equal(readVoterSession(storage), null);
+saveVoterSession({ code: 'ABC1234', category: 'student' }, storage);
+clearVoterSession(storage);
+assert.equal(readVoterSession(storage), null);
+console.log('Voter session checks passed');

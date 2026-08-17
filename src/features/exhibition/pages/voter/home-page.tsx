@@ -1,17 +1,13 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { LockKeyhole, ShieldCheck, Sparkles } from 'lucide-react';
 import {
-  getMockVotingState,
-  saveMockPinSession,
-  setMockVotingState,
-  verifyVotingPin,
-  type MockVotingState,
+  saveVoterSession,
+  verifyVotingCode,
 } from '../../data/pin-session';
 import {
-  DemoPinPanel,
   GlassLoginCard,
   GlassNavbar,
   PinErrorMessage,
@@ -21,9 +17,8 @@ import {
 const messages = {
   invalid: 'This voting code is invalid. Please check all seven characters and try again.',
   used: 'This voting code has already been used. Each code can submit only one vote.',
-  'not-started': 'Voting has not started yet. Please wait for an event organizer.',
-  closed: 'Voting is now closed. Thank you for visiting the exhibition.',
-  'network-error': 'The demo verification service is unavailable. Please try again.',
+  disabled: 'This voting code has been disabled. Please ask an event organizer for help.',
+  'network-error': 'The verification service is unavailable. Please try again.',
 } as const;
 
 export function HomePage() {
@@ -32,19 +27,15 @@ export function HomePage() {
   const [status, setStatus] = useState<'idle' | 'verifying' | 'success'>('idle');
   const [error, setError] = useState<keyof typeof messages | ''>('');
   const [category, setCategory] = useState('');
-  const [preview, setPreview] = useState<MockVotingState>('open');
-
-  useEffect(() => setPreview(getMockVotingState()), []);
 
   const changePin = (value: string) => { setPin(value); setError(''); setStatus('idle'); };
-  const changePreview = (value: MockVotingState) => { setPreview(value); setMockVotingState(value); setError(''); };
   const submit = async (event?: FormEvent) => {
     event?.preventDefault();
     if (pin.length !== 7 || status === 'verifying') return;
     setError(''); setStatus('verifying');
-    const result = await verifyVotingPin(pin, preview);
+    const result = await verifyVotingCode(pin);
     if (!result.ok) { setStatus('idle'); setError(result.reason); return; }
-    saveMockPinSession(result.session);
+    saveVoterSession(result.session);
     setCategory(result.session.category[0].toUpperCase() + result.session.category.slice(1));
     setStatus('success');
     setTimeout(() => router.replace('/projects'), 650);
@@ -69,9 +60,8 @@ export function HomePage() {
           </button>
         </form>
         <p className="privacy-note"><LockKeyhole size={15} />Your code can be used to vote only once. Please do not share it with anyone.</p>
-        <DemoPinPanel preview={preview} onPreview={changePreview} />
       </GlassLoginCard>
     </div>
-    <footer className="login-footer">Frontend demonstration · No real authentication or vote processing</footer>
+    <footer className="login-footer">Secure single-use voting · Powered by Supabase</footer>
   </main>;
 }
