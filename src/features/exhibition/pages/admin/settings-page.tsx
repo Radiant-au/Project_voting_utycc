@@ -1,0 +1,13 @@
+'use client';
+
+import { useState } from 'react';
+import { Palette, Settings, Trophy, Zap } from 'lucide-react';
+import { categoryLabels, pointValues } from '../../data/data';
+import type { VoterCategory } from '../../data/types';
+import { Button, Toast, useToastMessage } from '../../components/ui';
+import { AdminShell, Field, PageIntro, SettingsCard, Toggle } from '../../components/admin';
+
+export function AdminSettings() {
+  const [open, setOpen] = useState(true); const { notify, message, clear } = useToastMessage();
+  return <AdminShell title="Settings"><PageIntro eyebrow="Exhibition controls" title="Settings" /><div className="grid max-w-4xl gap-5"><SettingsCard icon={<Palette />} title="General"><Field label="Exhibition name" value="Campus Nexus Innovation Expo" onChange={()=>{}} /><Field label="Description" value="A shared gallery of curious questions and brave experiments." onChange={()=>{}} textarea /><div className="mt-4"><Button variant="outline" onClick={()=>notify('General settings saved')}>Save general settings</Button></div></SettingsCard><SettingsCard icon={<Zap />} title="Voting"><Toggle label="Voting is open" checked={open} onChange={()=>{setOpen(v=>!v);notify('Voting status updated')}} /><Toggle label="Allow pending categories" checked onChange={()=>notify('Voting setting saved')} /><Toggle label="Show public results" checked={false} onChange={()=>notify('Voting setting saved')} /></SettingsCard><SettingsCard icon={<Trophy />} title="Point system"><p className="text-sm text-muted-foreground">Changing point values affects calculated rankings.</p><div className="mt-4 grid gap-3 sm:grid-cols-3">{(['student','teacher','visitor'] as VoterCategory[]).map(c=><label key={c} className="text-sm font-bold">{categoryLabels[c]}<input defaultValue={pointValues[c]} type="number" className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-3" data-testid={`input-points-${c}`} /></label>)}</div><Button className="mt-4" onClick={()=>notify('Point system saved')}>Save point system</Button></SettingsCard><SettingsCard icon={<Settings />} title="Display settings"><Toggle label="Show live leaderboard" checked onChange={()=>notify('Display setting saved')} /><Toggle label="Show point totals" checked onChange={()=>notify('Display setting saved')} /><div className="mt-4"><label className="text-sm font-bold">Project card layout<select className="mt-1 block w-full rounded-xl border border-border bg-background px-3 py-3 text-sm"><option>Image-forward</option><option>Compact</option></select></label></div></SettingsCard></div>{message && <Toast message={message} onClose={clear} />}</AdminShell>;
+}
