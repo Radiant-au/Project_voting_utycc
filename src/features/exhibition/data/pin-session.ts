@@ -17,6 +17,7 @@ export type VoteSubmissionResult =
 export const VOTER_SESSION_KEY = 'utycc-voter-session';
 export const VOTE_RECEIPT_KEY = 'utycc-vote-receipt';
 
+
 type StorageLike = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 
 const isCategory = (value: unknown): value is VoterCategory =>
