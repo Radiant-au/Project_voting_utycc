@@ -1,5 +1,7 @@
 ## Why
 
+> Superseded for public voters by `proxy-public-voter-through-vercel`: retain this change's database/admin history, but do not restore its browser-to-Supabase voter RPC or sessionStorage architecture.
+
 The current UTYCC voting flow accepts only hard-coded demo PINs and stores votes in browser state, so it cannot enforce category assignment or one-vote-per-code rules. The existing `Voting_show` Supabase project is healthy but its public schema is empty, making this the right point to establish the real data and security boundary without migrating conflicting records.
 
 ## What Changes

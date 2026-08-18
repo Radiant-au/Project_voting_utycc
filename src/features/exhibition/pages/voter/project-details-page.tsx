@@ -6,16 +6,9 @@ import { Check, ChevronLeft, ShieldCheck, Zap } from "lucide-react";
 import {
   categoryLabels,
   pointValues,
-  projects as seedProjects,
 } from "../../data/data";
-import {
-  clearVoterSession,
-  readVoterSession,
-  submitVote,
-  VOTE_RECEIPT_KEY,
-  type CodeFailure,
-  type VoterSession,
-} from "../../data/pin-session";
+import { voterApi, type PublicVoterSession } from "../../data/voter-api";
+import type { Project } from "../../data/types";
 import { Badge, Button, Modal, NotFound } from "../../components/ui";
 import {
   GlassNavbar,
@@ -25,28 +18,26 @@ import {
 export function ProjectDetailsPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
-  const project = seedProjects.find((item) => item.id === params.id);
-  const [session, setSession] = useState<VoterSession | null>();
+  const [project, setProject] = useState<Project | null>();
+  const [session, setSession] = useState<PublicVoterSession | null>();
   const [selected, setSelected] = useState(false);
   const [modal, setModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
-  const [submitError, setSubmitError] = useState<CodeFailure | "">("");
+  const [submitError, setSubmitError] = useState(false);
   const [logout, setLogout] = useState(false);
 
   useEffect(() => {
-    const stored = readVoterSession();
-    if (!stored) {
-      router.replace("/");
-      return;
-    }
-    setSession(stored);
-    setSelected(localStorage.getItem("exhibition-selected") === params.id);
-    setModal(new URLSearchParams(location.search).get("confirm") === "true");
+    Promise.all([voterApi.session(), voterApi.project(params.id)])
+      .then(([sessionResponse, projectResponse]) => { setSession(sessionResponse.session); setProject(projectResponse.project); })
+      .catch(() => router.replace("/"));
+    const confirm = new URLSearchParams(location.search).get("confirm") === "true";
+    setSelected(confirm);
+    setModal(confirm);
   }, [params.id, router]);
 
-  if (!project) return <NotFound />;
-  if (!session)
+  if (project === null) return <NotFound />;
+  if (!session || !project)
     return (
       <main className="utycc-page">
         <GlassNavbar />
@@ -56,19 +47,16 @@ export function ProjectDetailsPage() {
   const vote = async () => {
     if (submitting) return;
     setSubmitting(true);
-    setSubmitError("");
-    const result = await submitVote(session.code, project.id);
-    setSubmitting(false);
-    if (!result.ok) { setSubmitError(result.reason); return; }
-    sessionStorage.setItem(VOTE_RECEIPT_KEY, JSON.stringify({ projectId: project.id, category: session.category, voteId: result.voteId }));
-    clearVoterSession();
-    setDone(true);
-    setModal(false);
-    router.replace("/vote/success");
+    setSubmitError(false);
+    try {
+      await voterApi.vote(project.id);
+      setDone(true);
+      setModal(false);
+      router.replace("/vote/success");
+    } catch { setSubmitting(false); setSubmitError(true); }
   };
   const exit = () => {
-    clearVoterSession();
-    router.replace("/");
+    void voterApi.logout().finally(() => router.replace("/"));
   };
 
   return (
@@ -119,7 +107,6 @@ export function ProjectDetailsPage() {
                     variant="quiet"
                     onClick={() => {
                       setSelected(false);
-                      localStorage.removeItem("exhibition-selected");
                     }}
                   >
                     Choose another project
@@ -133,7 +120,6 @@ export function ProjectDetailsPage() {
                 <Button
                   onClick={() => {
                     setSelected(true);
-                    localStorage.setItem("exhibition-selected", project.id);
                   }}
                 >
                   Select this project
@@ -166,7 +152,7 @@ export function ProjectDetailsPage() {
             <Zap size={16} />
             Your vote cannot be changed after confirmation.
           </p>
-          {submitError && <p className="mt-3 text-sm font-bold text-destructive" role="alert">{submitError === "used" ? "This code has already been used." : submitError === "disabled" ? "This code has been disabled." : submitError === "network-error" ? "Could not record your vote. Please try again." : "This voting session is invalid."}</p>}
+          {submitError && <p className="mt-3 text-sm font-bold text-destructive" role="alert">Could not record your vote. It may already be used or voting may be closed.</p>}
           <div className="mt-6 grid grid-cols-2 gap-3">
             <Button
               variant="quiet"

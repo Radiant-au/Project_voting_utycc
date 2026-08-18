@@ -1,5 +1,7 @@
 ## 1. Database Security Boundary
 
+> Supersession note: `proxy-public-voter-through-vercel` replaces the public browser RPC/session tasks below with Vercel Route Handlers and HTTP-only sessions. Task 4.2 remains an honest record of incomplete live verification.
+
 - [x] 1.1 Read the installed Next.js 16 guidance relevant to the touched App Router, navigation, and server/client boundaries before editing application code.
 - [x] 1.2 Add a versioned Supabase migration for `voting_codes` and `votes` with seven-character/category/status checks, timestamps, foreign key, and unique single-vote constraints.
 - [x] 1.3 Add fixed-search-path `SECURITY DEFINER` functions for cryptographic bounded code generation, read-only verification, atomic row-locked vote submission, authorized code listing, and disabling only unused codes.

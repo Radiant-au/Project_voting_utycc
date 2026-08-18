@@ -2,15 +2,36 @@ export type Database = {
   public: {
     Tables: {
       votes: {
-        Row: { category: string; created_at: string; id: string; project_id: string; voting_code_id: string };
-        Insert: { category: string; created_at?: string; id?: string; project_id: string; voting_code_id: string };
-        Update: { category?: string; created_at?: string; id?: string; project_id?: string; voting_code_id?: string };
-        Relationships: [];
+        Row: { category: string; created_at: string; id: string; points: number; project_id: string; voting_code_id: string };
+        Insert: { category: string; created_at?: string; id?: string; points: number; project_id: string; voting_code_id: string };
+        Update: { category?: string; created_at?: string; id?: string; points?: number; project_id?: string; voting_code_id?: string };
+        Relationships: [
+          { foreignKeyName: 'votes_project_id_fkey'; columns: ['project_id']; isOneToOne: false; referencedRelation: 'projects'; referencedColumns: ['id'] },
+          { foreignKeyName: 'votes_voting_code_id_fkey'; columns: ['voting_code_id']; isOneToOne: true; referencedRelation: 'voting_codes'; referencedColumns: ['id'] },
+        ];
       };
       voting_codes: {
         Row: { category: string; code: string; created_at: string; id: string; status: string; used_at: string | null };
         Insert: { category: string; code: string; created_at?: string; id?: string; status?: string; used_at?: string | null };
         Update: { category?: string; code?: string; created_at?: string; id?: string; status?: string; used_at?: string | null };
+        Relationships: [];
+      };
+      projects: {
+        Row: { category: string; created_at: string; features: string[]; full_description: string; id: string; image_url: string; is_active: boolean; project_number: string; short_description: string; team_name: string; title: string };
+        Insert: { category: string; created_at?: string; features?: string[]; full_description: string; id: string; image_url: string; is_active?: boolean; project_number: string; short_description: string; team_name: string; title: string };
+        Update: Partial<Database['public']['Tables']['projects']['Insert']>;
+        Relationships: [];
+      };
+      voter_rate_limits: {
+        Row: { action: string; attempts: number; expires_at: string; fingerprint: string; window_started_at: string };
+        Insert: { action: string; attempts?: number; expires_at: string; fingerprint: string; window_started_at: string };
+        Update: Partial<Database['public']['Tables']['voter_rate_limits']['Row']>;
+        Relationships: [];
+      };
+      voting_settings: {
+        Row: { id: boolean; is_open: boolean; updated_at: string };
+        Insert: { id?: boolean; is_open?: boolean; updated_at?: string };
+        Update: { is_open?: boolean; updated_at?: string };
         Relationships: [];
       };
     };
@@ -22,6 +43,9 @@ export type Database = {
       list_voting_codes: { Args: { input_category?: string | null; input_status?: string | null }; Returns: Database['public']['Tables']['voting_codes']['Row'][] };
       submit_vote: { Args: { input_code: string; input_project_id: string }; Returns: { result: string; vote_id: string | null }[] };
       verify_voting_code: { Args: { input_code: string }; Returns: { category: string | null; result: string }[] };
+      verify_voter_code: { Args: { input_code: string }; Returns: { category: string; voting_code_id: string }[] };
+      check_voter_rate_limit: { Args: { input_action: string; input_fingerprint: string }; Returns: { allowed: boolean; retry_after: number }[] };
+      submit_voter_vote: { Args: { input_project_id: string; input_voting_code_id: string }; Returns: { result: string; vote_id: string | null }[] };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

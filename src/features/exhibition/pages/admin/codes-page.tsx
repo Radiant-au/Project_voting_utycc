@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { supabase } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/admin-client';
 import { AdminShell, PageIntro } from '../../components/admin';
 import { Button } from '../../components/ui';
 import type { VoterCategory } from '../../data/types';

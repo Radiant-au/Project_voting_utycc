@@ -3,33 +3,20 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check } from 'lucide-react';
-import { categoryLabels, pointValues, projects } from '../../data/data';
-import { VOTE_RECEIPT_KEY } from '../../data/pin-session';
-import type { VoterCategory } from '../../data/types';
+import { categoryLabels } from '../../data/data';
+import { voterApi, type VoteReceipt } from '../../data/voter-api';
 import { Badge, Button } from '../../components/ui';
 import { GlassNavbar } from '../../components/voter-portal';
-
-interface VoteReceipt {
-  projectId: string;
-  category: VoterCategory;
-  voteId: string;
-}
 
 export function VoteSuccessPage() {
   const router = useRouter();
   const [receipt, setReceipt] = useState<VoteReceipt | null>();
 
   useEffect(() => {
-    try {
-      const stored = JSON.parse(sessionStorage.getItem(VOTE_RECEIPT_KEY) || 'null') as Partial<VoteReceipt> | null;
-      if (!stored?.projectId || !stored.category || !stored.voteId) throw new Error();
-      setReceipt(stored as VoteReceipt);
-    } catch {
-      router.replace('/');
-    }
+    voterApi.receipt().then(({ receipt }) => setReceipt(receipt)).catch(() => router.replace('/'));
   }, [router]);
 
-  const project = projects.find((item) => item.id === receipt?.projectId);
+  const project = receipt?.project;
   if (!receipt || !project) return <main className="utycc-page" />;
 
   return <main className="utycc-page success-page">
@@ -46,7 +33,7 @@ export function VoteSuccessPage() {
           <h2>{project.title}</h2>
           <dl>
             <div><dt>Your category</dt><dd>{categoryLabels[receipt.category]} Voter</dd></div>
-            <div><dt>Contribution</dt><dd>{pointValues[receipt.category]} points</dd></div>
+            <div><dt>Contribution</dt><dd>{receipt.points} points</dd></div>
             <div><dt>Receipt</dt><dd>{receipt.voteId.slice(0, 8).toUpperCase()}</dd></div>
             <div><dt>Status</dt><dd>Recorded</dd></div>
           </dl>

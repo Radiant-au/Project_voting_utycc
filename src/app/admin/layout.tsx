@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Button } from '@/features/exhibition/components/ui';
-import { supabase } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/admin-client';
 
 type AuthState = 'loading' | 'signed-out' | 'forbidden' | 'admin';
 
