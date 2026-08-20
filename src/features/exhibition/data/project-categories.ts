@@ -5,8 +5,8 @@ export const projectCategories = ['Information Science', 'Computer Engineering',
 export const projectCategoryShortNames: Record<ProjectCategory, string> = {
   'Information Science': 'IS',
   'Computer Engineering': 'CE',
-  'Electronic Engineering': 'EcE',
-  'Precision Engineering': 'PrE',
+  'Electronic Engineering': 'ECE',
+  'Precision Engineering': 'PRE',
   'Advanced Material Engineering': 'AME',
 };
 
