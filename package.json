@@ -7,7 +7,9 @@
     "build": "next build --webpack",
     "start": "next start",
     "test:voter": "node --experimental-strip-types scripts/check-pin-session.ts",
+    "test:admin-projects": "node --experimental-strip-types scripts/check-admin-projects.ts",
     "test:pin": "npm run test:voter",
+    "test:voting-features": "node --experimental-strip-types scripts/check-voting-features.ts",
     "test:voting-db": "node --experimental-strip-types scripts/check-voting-concurrency.ts",
     "typecheck": "tsc --noEmit"
   },

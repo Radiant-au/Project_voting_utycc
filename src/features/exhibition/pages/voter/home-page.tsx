@@ -13,21 +13,16 @@ import {
   primaryButton,
   voterPage,
 } from "../../components/voter-portal";
-
-const messages = {
-  invalid:
-    "This voting code is invalid. Please check all seven characters and try again.",
-  rate_limited: "Too many attempts. Please wait a moment and try again.",
-  "network-error": "The verification service is unavailable. Please try again.",
-} as const;
+import { useVoterLocale } from '../../i18n';
 
 export function HomePage() {
+  const { t, categoryLabel } = useVoterLocale();
   const router = useRouter();
   const [pin, setPin] = useState("");
   const [status, setStatus] = useState<"idle" | "verifying" | "success">(
     "idle",
   );
-  const [error, setError] = useState<keyof typeof messages | "">("");
+  const [error, setError] = useState<"invalid" | "rate_limited" | "network-error" | "">("");
   const [category, setCategory] = useState("");
 
   const changePin = (value: string) => {
@@ -42,9 +37,7 @@ export function HomePage() {
     setStatus("verifying");
     try {
       const { session } = await voterApi.verifyCode(pin);
-      setCategory(
-        session.category[0].toUpperCase() + session.category.slice(1),
-      );
+      setCategory(categoryLabel(session.category));
       setStatus("success");
       setTimeout(() => router.replace("/projects"), 650);
     } catch (failure) {
@@ -77,16 +70,15 @@ export function HomePage() {
         <div className="animate-rise text-center min-[760px]:text-left">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-200/20 bg-cyan-900/10 px-3 py-2 text-[.68rem] font-extrabold uppercase tracking-[.08em] text-[#b4ecf8]">
             <Sparkles size={15} />
-            2025–2026 Project Show
+            {t('projectShow')}
           </span>
           <h2 className="mt-5 text-[clamp(1.55rem,7.8vw,3.25rem)] leading-[1.08] tracking-[-.035em]">
-            University of Technology
+            {t('homeTitle')}
             <br />
-            (Yatanarpon Cyber City)
+            {t('homeSubtitle')}
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-[.92rem] leading-[1.65] text-[#aab5d0] min-[760px]:ml-0">
-            Enter your 7-character voting code to explore the projects and cast
-            your vote.
+            {t('homeDescription')}
           </p>
         </div>
         <GlassLoginCard>
@@ -98,10 +90,10 @@ export function HomePage() {
               disabled={status === "verifying" || status === "success"}
               invalid={Boolean(error)}
             />
-            {error && <PinErrorMessage>{messages[error]}</PinErrorMessage>}
+            {error && <PinErrorMessage>{error === 'invalid' ? t('invalidCode') : error === 'rate_limited' ? t('rateLimited') : t('serviceUnavailable')}</PinErrorMessage>}
             {status === "success" && (
               <PinErrorMessage tone="success">
-                Code verified · Welcome, {category} Voter
+                {t('welcome', { category })}
               </PinErrorMessage>
             )}
             <button
@@ -112,27 +104,26 @@ export function HomePage() {
               {status === "verifying" ? (
                 <>
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white" />
-                  Verifying code...
+                  {t('verifying')}
                 </>
               ) : status === "success" ? (
                 <>
                   <ShieldCheck size={18} />
-                  Code verified
+                  {t('codeVerified')}
                 </>
               ) : (
-                "Continue to Vote"
+                t('continueVote')
               )}
             </button>
           </form>
           <p className="mx-auto mt-3.5 flex items-start justify-center gap-1.5 text-center text-[.68rem] leading-[1.4] text-[#929ebb] [&>svg]:shrink-0">
             <LockKeyhole size={15} />
-            Your code can be used to vote only once. Please do not share it with
-            anyone.
+            {t('security')}
           </p>
         </GlassLoginCard>
       </div>
       <footer className="relative z-[1] px-4 pb-[max(1.2rem,env(safe-area-inset-bottom))] text-center text-[.65rem] text-[#72809f]">
-        Secure single-use voting · Protected by UTYCC
+        {t('secureFooter')}
       </footer>
     </main>
   );

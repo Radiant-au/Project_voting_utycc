@@ -12,7 +12,7 @@ import {
   UserRound,
   X,
 } from "lucide-react";
-import { categoryLabels, pointValues } from "../data/data";
+import { categoryLabels } from "../data/data";
 import type { VoterCategory } from "../data/types";
 
 export const cx = (...parts: Array<string | false | undefined>) =>
@@ -153,11 +153,7 @@ export function VoterHeader({ category }: { category?: VoterCategory }) {
     <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
       <Logo />
       <div className="flex items-center gap-2">
-        {category && (
-          <Badge tone="gold">
-            {categoryLabels[category]} · {pointValues[category]} pt
-          </Badge>
-        )}
+        {category && <Badge tone="gold">{categoryLabels[category]}</Badge>}
         <button
           className="grid h-10 w-10 place-items-center rounded-full bg-secondary text-foreground"
           aria-label="Profile menu"
@@ -227,10 +223,6 @@ export function CategoryCard({
         </span>
         <span className="mt-1 block max-w-[220px] text-sm leading-5 text-muted-foreground">
           {info.description}
-        </span>
-        <span className="mt-3 block text-xs font-bold text-primary">
-          {pointValues[category]} point{pointValues[category] > 1 ? "s" : ""}{" "}
-          per vote
         </span>
       </span>
       {selected && (

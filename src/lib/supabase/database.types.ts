@@ -17,8 +17,8 @@ export type Database = {
         Relationships: [];
       };
       projects: {
-        Row: { category: string; created_at: string; features: string[]; full_description: string; id: string; image_url: string; is_active: boolean; project_number: string; short_description: string; team_name: string; title: string };
-        Insert: { category: string; created_at?: string; features?: string[]; full_description: string; id: string; image_url: string; is_active?: boolean; project_number: string; short_description: string; team_name: string; title: string };
+        Row: { category: 'Information Science' | 'Computer Engineering' | 'Electronic Engineering' | 'Precision Engineering' | 'Advanced Material Engineering'; created_at: string; features: string[]; full_description: string; hidden_project_code: string; id: string; image_url: string; is_active: boolean; project_number: string; short_description: string; team_name: string; title: string };
+        Insert: { category: 'Information Science' | 'Computer Engineering' | 'Electronic Engineering' | 'Precision Engineering' | 'Advanced Material Engineering'; created_at?: string; features?: string[]; full_description: string; hidden_project_code: string; id: string; image_url: string; is_active?: boolean; project_number: string; short_description: string; team_name: string; title: string };
         Update: Partial<Database['public']['Tables']['projects']['Insert']>;
         Relationships: [];
       };
@@ -29,9 +29,9 @@ export type Database = {
         Relationships: [];
       };
       voting_settings: {
-        Row: { id: boolean; is_open: boolean; updated_at: string };
-        Insert: { id?: boolean; is_open?: boolean; updated_at?: string };
-        Update: { is_open?: boolean; updated_at?: string };
+        Row: { id: boolean; is_open: boolean; student_points: number; teacher_points: number; visitor_points: number; updated_at: string };
+        Insert: { id?: boolean; is_open?: boolean; student_points?: number; teacher_points?: number; visitor_points?: number; updated_at?: string };
+        Update: { is_open?: boolean; student_points?: number; teacher_points?: number; visitor_points?: number; updated_at?: string };
         Relationships: [];
       };
     };
@@ -46,6 +46,7 @@ export type Database = {
       verify_voter_code: { Args: { input_code: string }; Returns: { category: string; has_voted: boolean; voting_code_id: string }[] };
       check_voter_rate_limit: { Args: { input_action: string; input_fingerprint: string }; Returns: { allowed: boolean; retry_after: number }[] };
       submit_voter_vote: { Args: { input_project_id: string; input_voting_code_id: string }; Returns: { result: string; vote_id: string | null }[] };
+      admin_live_top_projects: { Args: Record<string, never>; Returns: { rank: number; hidden_project_code: string; category: string; total_points: number }[] };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

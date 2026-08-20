@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 process.env.VOTER_SESSION_SECRET = 'test-secret-that-is-at-least-32-characters';
 
@@ -22,4 +23,9 @@ assert.equal(readSession(token, voter.exp), null);
 
 const receipt = createReceiptSession('00000000-0000-0000-0000-000000000002', 100);
 assert.deepEqual(readSession(signSession(receipt), 101), receipt);
+const voterData = readFileSync('src/lib/voter/data.ts', 'utf8');
+const voterReceipt = readFileSync('src/app/api/voter/receipt/route.ts', 'utf8');
+assert.doesNotMatch(voterData, /row\.(project_number|hidden_project_code|points)/);
+assert.match(voterData, /const columns = 'id,title/);
+assert.doesNotMatch(voterReceipt, /select\([^)]*points/);
 console.log('Voter session and request checks passed');

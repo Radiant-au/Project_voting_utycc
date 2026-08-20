@@ -1,7 +1,7 @@
 import type { Project, VoterCategory } from './types';
 
 export type PublicVoterSession = { category: VoterCategory; hasVoted: boolean };
-export type VoteReceipt = { voteId: string; category: VoterCategory; points: number; createdAt: string; project: Project };
+export type VoteReceipt = { voteId: string; category: VoterCategory; createdAt: string; project: Project };
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, { ...init, cache: 'no-store', headers: { 'Content-Type': 'application/json', ...init?.headers } });
@@ -15,6 +15,7 @@ export const voterApi = {
   session: () => request<{ session: PublicVoterSession }>('/api/voter/session'),
   logout: () => request<{ ok: true }>('/api/voter/logout', { method: 'POST' }),
   projects: () => request<{ projects: Project[] }>('/api/voter/projects'),
+  status: () => request<{ status: { isOpen: boolean } }>('/api/voter/status'),
   vote: (projectId: string) => request<{ ok: true }>('/api/voter/vote', { method: 'POST', body: JSON.stringify({ projectId }) }),
   receipt: () => request<{ receipt: VoteReceipt }>('/api/voter/receipt'),
 };

@@ -3,20 +3,29 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, ShieldCheck, Zap } from "lucide-react";
-import { categoryLabels, pointValues, projectMajors } from "../../data/data";
+import { projectCategoryOptions } from "../../data/project-categories";
 import { voterApi, type PublicVoterSession } from "../../data/voter-api";
 import type { Project } from "../../data/types";
-import { Badge, Button, EmptyState, LoadingCard, Modal } from "../../components/ui";
+import {
+  Badge,
+  Button,
+  EmptyState,
+  LoadingCard,
+  Modal,
+} from "../../components/ui";
 import {
   GlassNavbar,
   GlassProjectCard,
   GlassVoteBar,
+  VoterStatusBanner,
   VotingPortalLogoutDialog,
   ambient,
   projectsPage,
 } from "../../components/voter-portal";
+import { projectCategoryLabel, useVoterLocale } from "../../i18n";
 
 export function ProjectsPage() {
+  const { locale, t, categoryLabel } = useVoterLocale();
   const router = useRouter();
   const [session, setSession] = useState<PublicVoterSession | null>();
   const [items, setItems] = useState<Project[]>([]);
@@ -29,30 +38,54 @@ export function ProjectsPage() {
   const [voteError, setVoteError] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [logout, setLogout] = useState(false);
+  const [votingOpen, setVotingOpen] = useState<boolean | null>(null);
 
   useEffect(() => {
-    Promise.all([voterApi.session(), voterApi.projects()])
-      .then(([sessionResponse, projectResponse]) => {
+    Promise.all([
+      voterApi.session(),
+      voterApi.projects(),
+      voterApi.status().catch(() => null),
+    ])
+      .then(([sessionResponse, projectResponse, statusResponse]) => {
         setSession(sessionResponse.session);
         setItems(projectResponse.projects);
         setVoted(sessionResponse.session.hasVoted);
+        setVotingOpen(statusResponse?.status.isOpen ?? null);
       })
       .catch(() => router.replace("/"))
       .finally(() => setLoading(false));
   }, [router]);
 
+  useEffect(() => {
+    const loadStatus = () => {
+      void voterApi
+        .status()
+        .then(({ status }) => setVotingOpen(status.isOpen))
+        .catch(() => setVotingOpen(null));
+    };
+    loadStatus();
+    window.addEventListener("focus", loadStatus);
+    return () => window.removeEventListener("focus", loadStatus);
+  }, []);
+
+  useEffect(() => {
+    if (votingOpen !== true) {
+      setSelected("");
+      setConfirming(false);
+    }
+  }, [votingOpen]);
+
   const visible = useMemo(
     () =>
-      items
-        .filter(
-          (project) =>
-            !project.isArchived &&
-            (!query ||
-              `${project.title} ${project.teamName} ${project.shortDescription}`
-                .toLowerCase()
-                .includes(query.toLowerCase())) &&
-            (category === "All" || project.category === category),
-        ),
+      items.filter(
+        (project) =>
+          !project.isArchived &&
+          (!query ||
+            `${project.title} ${project.teamName} ${project.shortDescription}`
+              .toLowerCase()
+              .includes(query.toLowerCase())) &&
+          (category === "All" || project.category === category),
+      ),
     [items, query, category],
   );
   const selectedProject = items.find((project) => project.id === selected);
@@ -60,14 +93,16 @@ export function ProjectsPage() {
     void voterApi.logout().finally(() => router.replace("/"));
   };
   const vote = async () => {
-    if (!selectedProject || submitting) return;
+    if (!selectedProject || submitting || votingOpen !== true) return;
     setSubmitting(true);
     setVoteError(false);
     try {
       await voterApi.vote(selectedProject.id);
       router.replace("/vote/success");
-    } catch {
+    } catch (failure) {
       setSubmitting(false);
+      if (failure instanceof Error && failure.message === "voting_closed")
+        setVotingOpen(false);
       setVoteError(true);
     }
   };
@@ -98,23 +133,22 @@ export function ProjectsPage() {
         category={session.category}
         onLogout={() => setLogout(true)}
       />
+      {votingOpen !== null && <VoterStatusBanner isOpen={votingOpen} />}
       <div className="relative z-[1] mx-auto max-w-6xl px-4 sm:px-6">
         <section className="flex flex-col items-start gap-6 border-b border-white/15 py-10 min-[641px]:py-14 min-[641px]:flex-row min-[641px]:items-end min-[641px]:justify-between">
           <div>
             <span className="text-[.68rem] font-extrabold uppercase tracking-[.14em] text-[#69e6ff]">
-              UTYCC · 2025–2026 Project Show
+              UTYCC · {t("projectShow")}
             </span>
-            <h1 className="mt-3 text-[clamp(2.25rem,6vw,4.75rem)] leading-[.98] tracking-[-.05em]">
-              Choose your project.
+            <h1
+              className={`mt-3 ${locale === "my" ? "text-[clamp(1.8rem,5vw,3rem)]" : "text-[clamp(2.25rem,6vw,4.75rem)]"} leading-[.98] tracking-[-.05em]`}
+            >
+              {t("chooseProject")}
             </h1>
-            <p className="mt-4 text-sm text-[#9eabc8]">
-              Discover student innovation and select the project that deserves
-              your vote.
-            </p>
+            <p className="mt-4 text-sm text-[#9eabc8]">{t("discover")}</p>
           </div>
           <Badge tone="gold">
-            {categoryLabels[session.category]} Voter ·{" "}
-            {pointValues[session.category]} points
+            {categoryLabel(session.category)} {t("voter")}
           </Badge>
         </section>
         {voted && (
@@ -138,16 +172,36 @@ export function ProjectsPage() {
               className="min-h-11 w-full rounded-xl border border-white/15 bg-[#1a2340]/65 pr-3 pl-9 text-xs outline-none focus:border-[#69e6ff] focus:ring-2 focus:ring-cyan-300/15"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search projects or teams"
-              aria-label="Search projects or teams"
+              placeholder={t("search")}
+              aria-label={t("search")}
             />
           </div>
-          <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1" aria-label="Filter projects by major">
-            {projectMajors.map(([short, name]) => <button key={short} type="button" title={name} aria-pressed={category === name} onClick={() => setCategory(name)} className={`min-h-9 shrink-0 rounded-full border px-3 text-xs font-extrabold transition ${category === name ? "border-[#69e6ff] bg-[#69e6ff] text-[#071126]" : "border-white/15 bg-white/5 text-[#aeb9d4] hover:border-cyan-200/40"}`}>{short}</button>)}
+          <div
+            className="mt-2.5 flex gap-2 overflow-x-auto pb-1"
+            aria-label={t("filterProjects")}
+          >
+            {projectCategoryOptions.map(([short, name]) => {
+              const label = name === "All" ? t("all") : short;
+              const title =
+                name === "All" ? t("all") : projectCategoryLabel(name, locale);
+              return (
+                <button
+                  key={short}
+                  type="button"
+                  title={title}
+                  aria-label={title}
+                  aria-pressed={category === name}
+                  onClick={() => setCategory(name)}
+                  className={`min-h-9 shrink-0 rounded-full border px-3 text-xs font-extrabold transition ${category === name ? "border-[#69e6ff] bg-[#69e6ff] text-[#071126]" : "border-white/15 bg-white/5 text-[#aeb9d4] hover:border-cyan-200/40"}`}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
         </div>
         <div className="mt-6 flex items-center justify-between text-xs font-bold text-[#9ba8c6]">
-          <p>{visible.length} projects to discover</p>
+          <p>{t("projectsFound", { count: visible.length })}</p>
           {(query || category !== "All") && (
             <button
               className="cursor-pointer border-0 bg-transparent text-xs font-extrabold text-[#69e6ff]"
@@ -157,7 +211,7 @@ export function ProjectsPage() {
                 setCategory("All");
               }}
             >
-              Clear filters
+              {t("clearFilters")}
             </button>
           )}
         </div>
@@ -174,6 +228,7 @@ export function ProjectsPage() {
                   selected={selected === project.id}
                   onSelect={() =>
                     !voted &&
+                    votingOpen === true &&
                     setSelected(selected === project.id ? "" : project.id)
                   }
                 />
@@ -183,9 +238,9 @@ export function ProjectsPage() {
         ) : (
           <EmptyState
             icon={<Search />}
-            title="No projects found"
-            text="Try a different search or clear your filters."
-            action="Clear filters"
+            title={t("noProjects")}
+            text={t("tryAgain")}
+            action={t("clearFilters")}
             onClick={() => {
               setQuery("");
               setCategory("All");
@@ -193,21 +248,48 @@ export function ProjectsPage() {
           />
         )}
       </div>
-      {selectedProject && !voted && (
+      {selectedProject && !voted && votingOpen === true && (
         <>
-          <GlassVoteBar project={selectedProject} onCancel={() => setSelected("")} onVote={() => { setVoteError(false); setConfirming(true); }} />
+          <GlassVoteBar
+            project={selectedProject}
+            onCancel={() => setSelected("")}
+            onVote={() => {
+              setVoteError(false);
+              setConfirming(true);
+            }}
+          />
         </>
       )}
       {confirming && selectedProject && (
         <Modal onClose={() => !submitting && setConfirming(false)}>
-          <img src={selectedProject.imageUrl} alt="" className="h-28 w-full rounded-xl object-cover" />
-          <Badge tone="gold">Project {selectedProject.projectNumber}</Badge>
-          <h2 className="mt-3 text-2xl font-bold">Confirm your vote for {selectedProject.title}?</h2>
-          <p className="mt-4 flex gap-2 text-sm font-bold text-destructive"><Zap className="shrink-0" size={17} />Your vote cannot be changed after confirmation.</p>
-          {voteError && <p className="mt-3 text-sm font-bold text-destructive" role="alert">Could not record your vote. This code may already be used or voting may be closed.</p>}
+          <img
+            src={selectedProject.imageUrl}
+            alt=""
+            className="h-28 w-full rounded-xl object-cover"
+          />
+          <h2 className="mt-3 text-2xl font-bold">
+            {t("confirmVote", { title: selectedProject.title })}
+          </h2>
+          <p className="mt-4 flex gap-2 text-sm font-bold text-destructive">
+            <Zap className="shrink-0" size={17} />
+            {t("cannotChange")}
+          </p>
+          {voteError && (
+            <p className="mt-3 text-sm font-bold text-destructive" role="alert">
+              {t("voteFailed")}
+            </p>
+          )}
           <div className="mt-6 grid grid-cols-2 gap-3">
-            <Button variant="quiet" disabled={submitting} onClick={() => setConfirming(false)}>Cancel</Button>
-            <Button disabled={submitting} onClick={vote}>{submitting ? "Recording…" : "Confirm vote"}</Button>
+            <Button
+              variant="quiet"
+              disabled={submitting}
+              onClick={() => setConfirming(false)}
+            >
+              {t("cancel")}
+            </Button>
+            <Button disabled={submitting} onClick={vote}>
+              {submitting ? t("record") : t("confirm")}
+            </Button>
           </div>
         </Modal>
       )}

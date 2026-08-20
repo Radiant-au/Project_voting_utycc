@@ -1,18 +1,24 @@
+import type { ProjectCategory } from './project-categories';
+
 export type VoterCategory = 'student' | 'teacher' | 'visitor';
 export type CategoryStatus = 'pending' | 'verified' | 'rejected';
 
 export interface Project {
   id: string;
-  projectNumber: string;
   title: string;
   shortDescription: string;
   fullDescription: string;
-  category: string;
+  category: ProjectCategory;
   teamName: string;
   imageUrl: string;
   isActive: boolean;
   isArchived: boolean;
   features: string[];
+}
+
+export interface AdminProject extends Project {
+  projectNumber: string;
+  hiddenProjectCode: string;
 }
 
 export interface UserProfile {

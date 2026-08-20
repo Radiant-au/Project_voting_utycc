@@ -1,3 +1,5 @@
-import { AdminOverview } from '@/features/exhibition/pages/admin/overview-page';
+import { redirect } from 'next/navigation';
 
-export default AdminOverview;
+export default function AdminPage() {
+  redirect('/admin/projects');
+}

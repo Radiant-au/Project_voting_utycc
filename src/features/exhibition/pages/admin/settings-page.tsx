@@ -1,13 +1,55 @@
 'use client';
 
-import { useState } from 'react';
-import { Palette, Settings, Trophy, Zap } from 'lucide-react';
-import { categoryLabels, pointValues } from '../../data/data';
-import type { VoterCategory } from '../../data/types';
-import { Button, Toast, useToastMessage } from '../../components/ui';
-import { AdminShell, Field, PageIntro, SettingsCard, Toggle } from '../../components/admin';
+import { useEffect, useState } from 'react';
+import { Trophy, Zap } from 'lucide-react';
+import { supabase } from '@/lib/supabase/admin-client';
+import { Button } from '../../components/ui';
+import { AdminShell, PageIntro, SettingsCard, Toggle } from '../../components/admin';
+
+const defaults = { is_open: true, student_points: 1, teacher_points: 2, visitor_points: 3 };
 
 export function AdminSettings() {
-  const [open, setOpen] = useState(true); const { notify, message, clear } = useToastMessage();
-  return <AdminShell title="Settings"><PageIntro eyebrow="Exhibition controls" title="Settings" /><div className="grid max-w-4xl gap-5"><SettingsCard icon={<Palette />} title="General"><Field label="Exhibition name" value="Campus Nexus Innovation Expo" onChange={()=>{}} /><Field label="Description" value="A shared gallery of curious questions and brave experiments." onChange={()=>{}} textarea /><div className="mt-4"><Button variant="outline" onClick={()=>notify('General settings saved')}>Save general settings</Button></div></SettingsCard><SettingsCard icon={<Zap />} title="Voting"><Toggle label="Voting is open" checked={open} onChange={()=>{setOpen(v=>!v);notify('Voting status updated')}} /><Toggle label="Allow pending categories" checked onChange={()=>notify('Voting setting saved')} /><Toggle label="Show public results" checked={false} onChange={()=>notify('Voting setting saved')} /></SettingsCard><SettingsCard icon={<Trophy />} title="Point system"><p className="text-sm text-muted-foreground">Changing point values affects calculated rankings.</p><div className="mt-4 grid gap-3 sm:grid-cols-3">{(['student','teacher','visitor'] as VoterCategory[]).map(c=><label key={c} className="text-sm font-bold">{categoryLabels[c]}<input defaultValue={pointValues[c]} type="number" className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-3" data-testid={`input-points-${c}`} /></label>)}</div><Button className="mt-4" onClick={()=>notify('Point system saved')}>Save point system</Button></SettingsCard><SettingsCard icon={<Settings />} title="Display settings"><Toggle label="Show live leaderboard" checked onChange={()=>notify('Display setting saved')} /><Toggle label="Show point totals" checked onChange={()=>notify('Display setting saved')} /><div className="mt-4"><label className="text-sm font-bold">Project card layout<select className="mt-1 block w-full rounded-xl border border-border bg-background px-3 py-3 text-sm"><option>Image-forward</option><option>Compact</option></select></label></div></SettingsCard></div>{message && <Toast message={message} onClose={clear} />}</AdminShell>;
+  const [settings, setSettings] = useState(defaults);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [savingOpen, setSavingOpen] = useState(false);
+  const [savedOpen, setSavedOpen] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    void (async () => {
+      const { data, error: loadError } = await supabase.from('voting_settings').select('is_open,student_points,teacher_points,visitor_points').eq('id', true).maybeSingle();
+      setLoading(false);
+      if (loadError || !data) return setError(loadError?.message || 'Voting settings were not found. Apply the latest Supabase migration.');
+      setSettings(data);
+    })();
+  }, []);
+
+  const saveOpenState = async (isOpen: boolean) => {
+    const previous = settings.is_open;
+    setSettings((current) => ({ ...current, is_open: isOpen }));
+    setSavingOpen(true);
+    setSavedOpen(false);
+    setError('');
+    const { error: saveError } = await supabase.from('voting_settings').update({ is_open: isOpen }).eq('id', true);
+    setSavingOpen(false);
+    if (saveError) {
+      setSettings((current) => ({ ...current, is_open: previous }));
+      return setError(saveError.message);
+    }
+    setSavedOpen(true);
+  };
+
+  const save = async () => {
+    if (Object.values(settings).some((value) => typeof value === 'number' && (!Number.isInteger(value) || value < 1 || value > 100))) return setError('Point values must be whole numbers from 1 to 100.');
+    setSaving(true);
+    setError('');
+    const { error: saveError } = await supabase.from('voting_settings').update({ student_points: settings.student_points, teacher_points: settings.teacher_points, visitor_points: settings.visitor_points, is_open: settings.is_open }).eq('id', true);
+    setSaving(false);
+    if (saveError) setError(saveError.message);
+  };
+
+  const setPoints = (key: 'student_points' | 'teacher_points' | 'visitor_points', value: string) => setSettings((current) => ({ ...current, [key]: Number(value) }));
+
+  return <AdminShell title="Settings"><PageIntro eyebrow="Voting controls" title="Voting settings" />{loading ? <p className="text-sm text-muted-foreground">Loading settings…</p> : <div className="grid max-w-3xl gap-5"><SettingsCard icon={<Zap />} title="Voting"><Toggle label="Voting is open" checked={settings.is_open} onChange={() => void saveOpenState(!settings.is_open)} /><p className="mt-3 text-xs text-muted-foreground" role="status">{savingOpen ? 'Saving voting status…' : savedOpen ? 'Voting status saved.' : 'Voters fetch this status before voting.'}</p></SettingsCard><SettingsCard icon={<Trophy />} title="Point system"><p className="text-sm text-muted-foreground">The database calculates every vote with these values. Voters cannot choose a score.</p><div className="mt-4 grid gap-3 sm:grid-cols-3">{([['student_points', 'Student'], ['teacher_points', 'Teacher'], ['visitor_points', 'Visitor']] as const).map(([key, label]) => <label key={key} className="text-sm font-bold">{label}<input type="number" min="1" max="100" step="1" value={settings[key]} onChange={(event) => setPoints(key, event.target.value)} className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-3" /></label>)}</div><Button className="mt-4" disabled={saving || savingOpen} onClick={() => void save()}>{saving ? 'Saving…' : 'Save voting settings'}</Button></SettingsCard></div>}{error && <p className="mt-4 rounded-xl bg-destructive/10 p-3 text-sm font-semibold text-destructive" role="alert">{error}</p>}</AdminShell>;
 }

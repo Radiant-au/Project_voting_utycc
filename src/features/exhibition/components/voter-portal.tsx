@@ -17,9 +17,9 @@ import {
   UserRound,
   X,
 } from "lucide-react";
-import { categoryLabels } from "../data/data";
 import type { Project, VoterCategory } from "../data/types";
 import { Button, cx } from "./ui";
+import { projectCategoryLabel, useVoterLocale } from '../i18n';
 
 export const primaryButton =
   "mt-4 flex min-h-13 w-full cursor-pointer items-center justify-center gap-2 rounded-[.9rem] border border-white/15 bg-linear-to-r from-[#655cff] to-[#29c9e7] font-extrabold text-white shadow-[0_12px_26px_hsl(230_90%_50%/.24),inset_0_1px_#ffffff55] transition hover:-translate-y-px hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:bg-none disabled:bg-[#252d48]/75 disabled:text-[#74809d] disabled:shadow-none";
@@ -30,6 +30,7 @@ export const ambient =
   "pointer-events-none fixed z-0 rounded-full opacity-50 blur-xl animate-ambient";
 
 export function UniversityBrand({ compact = false }: { compact?: boolean }) {
+  const { t } = useVoterLocale();
   return (
     <Link
       href="/"
@@ -46,9 +47,7 @@ export function UniversityBrand({ compact = false }: { compact?: boolean }) {
           UTYCC
         </strong>
         <span className="block max-w-[7.2rem] truncate text-[.56rem] leading-[1.2] tracking-[.03em] text-[#abb7d5] sm:max-w-64 sm:text-[.64rem]">
-          {compact
-            ? "2025–2026 Project Show"
-            : "University of Technology (Yatanarpon Cyber City)"}
+          {compact ? t('projectShow') : `${t('university')} ${t('universityFull')}`}
         </span>
       </span>
     </Link>
@@ -56,21 +55,21 @@ export function UniversityBrand({ compact = false }: { compact?: boolean }) {
 }
 
 export function LanguageSwitcher() {
-  const [language, setLanguage] = useState<"MY" | "EN">("EN");
+  const { locale, setLocale, t } = useVoterLocale();
   return (
     <div
       className="inline-grid grid-cols-2 rounded-full border border-white/15 bg-[#090d1f]/50 p-[.2rem]"
-      aria-label="Language preview"
+      aria-label={t('language')}
     >
       {(["MY", "EN"] as const).map((item) => (
         <button
           key={item}
           type="button"
-          aria-pressed={language === item}
-          onClick={() => setLanguage(item)}
+          aria-pressed={(item === 'MY' ? locale === 'my' : locale === 'en')}
+          onClick={() => setLocale(item === 'MY' ? 'my' : 'en')}
           className={cx(
             "min-h-8 min-w-8 cursor-pointer rounded-full border-0 bg-transparent text-[.68rem] font-extrabold text-[#92a0bf] min-[371px]:min-w-9",
-            language === item &&
+            (item === 'MY' ? locale === 'my' : locale === 'en') &&
               "bg-linear-to-br from-[#756fff] to-[#45cee9] text-white shadow-[0_3px_12px_hsl(236_90%_55%/.3)]",
           )}
         >
@@ -82,6 +81,7 @@ export function LanguageSwitcher() {
 }
 
 export function VoterCategoryBadge({ category }: { category: VoterCategory }) {
+  const { t, categoryLabel } = useVoterLocale();
   return (
     <span
       className={cx(
@@ -94,7 +94,7 @@ export function VoterCategoryBadge({ category }: { category: VoterCategory }) {
           "border-blue-200/25 bg-blue-500/15 text-[#d3e0ff]",
       )}
     >
-      {categoryLabels[category]} Voter
+      {categoryLabel(category)} {t('voter')}
     </span>
   );
 }
@@ -106,6 +106,7 @@ export function GlassNavbar({
   category?: VoterCategory;
   onLogout?: () => void;
 }) {
+  const { t, categoryLabel } = useVoterLocale();
   return (
     <header className="relative z-25 mx-auto mt-[max(.5rem,env(safe-area-inset-top))] flex min-h-16 w-[calc(100%-1rem)] items-center justify-between gap-3 rounded-2xl border border-white/15 bg-[#080d20]/50 p-2 shadow-[inset_0_1px_hsl(0_0%_100%/.1),0_16px_45px_hsl(235_80%_2%/.24)] backdrop-blur-xl sm:mt-[max(.75rem,env(safe-area-inset-top))] sm:min-h-[4.4rem] sm:w-[min(calc(100%-1.5rem),74rem)] sm:rounded-[1.25rem] sm:px-3">
       <UniversityBrand compact />
@@ -116,17 +117,17 @@ export function GlassNavbar({
           <details className="relative">
             <summary
               className="flex h-9 w-9 cursor-pointer list-none items-center justify-center gap-px rounded-full border border-white/15 bg-[#1a2340]/75 [&::-webkit-details-marker]:hidden min-[371px]:h-[2.45rem] min-[371px]:w-[2.45rem]"
-              aria-label="Open PIN session menu"
+              aria-label={t('verifiedSession')}
             >
               <UserRound size={18} />
               <ChevronDown size={14} />
             </summary>
             <div className="absolute right-0 top-[calc(100%+.6rem)] w-52 rounded-2xl border border-white/15 bg-[#090d20]/90 p-4 shadow-[0_18px_45px_#030515aa] backdrop-blur-lg">
               <p className="m-0 text-[.68rem] text-[#909dbb]">
-                Verified voting session
+                {t('verifiedSession')}
               </p>
               <strong className="mt-[.2rem] block text-[.85rem]">
-                {categoryLabels[category]} Voter
+                {categoryLabel(category)} {t('voter')}
               </strong>
               <button
                 className="mt-[.8rem] flex min-h-10 w-full cursor-pointer items-center gap-2 border-0 border-t border-white/15 bg-transparent text-[.76rem] font-bold text-[#ffb8c1]"
@@ -134,13 +135,37 @@ export function GlassNavbar({
                 onClick={onLogout}
               >
                 <LogOut size={16} />
-                Exit Voting Portal
+                {t('exitPortal')}
               </button>
             </div>
           </details>
         )}
       </div>
     </header>
+  );
+}
+
+export function VoterStatusBanner({ isOpen }: { isOpen: boolean | null }) {
+  const { t } = useVoterLocale();
+  return (
+    <div
+      className={cx(
+        "relative z-[1] mx-auto mt-4 flex max-w-6xl items-start gap-3 rounded-2xl border px-4 py-3 text-sm sm:mx-6 lg:mx-auto",
+        isOpen === true
+          ? "border-emerald-200/20 bg-emerald-400/10 text-[#c8fbe7]"
+          : "border-amber-200/25 bg-amber-400/10 text-[#ffe8b0]",
+      )}
+      role="status"
+      aria-live="polite"
+    >
+      {isOpen === true ? <Check className="mt-0.5 shrink-0 text-emerald-300" size={18} /> : <LockKeyhole className="mt-0.5 shrink-0 text-amber-300" size={18} />}
+      <div>
+        <strong>{isOpen === true ? t('votingOpen') : isOpen === false ? t('votingClosed') : t('votingUnknown')}</strong>
+        <p className="mt-0.5 text-xs text-white/65">
+          {isOpen === true ? t('votingOpenText') : isOpen === false ? t('votingClosedText') : t('votingUnknownText')}
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -157,6 +182,7 @@ export function VotingPinInput({
   disabled?: boolean;
   invalid?: boolean;
 }) {
+  const { t } = useVoterLocale();
   const refs = useRef<Array<HTMLInputElement | null>>([]);
 
   const characters = Array.from(
@@ -244,7 +270,7 @@ export function VotingPinInput({
       disabled={disabled}
       aria-invalid={invalid}
     >
-      <legend className="sr-only">Seven-character voting code</legend>
+      <legend className="sr-only">{t('sevenCode')}</legend>
 
       <div className="grid grid-cols-7 gap-[.18rem] min-[371px]:gap-[.22rem] sm:gap-[clamp(.25rem,1.5vw,.52rem)]">
         {characters.map((character, index) => (
@@ -264,7 +290,7 @@ export function VotingPinInput({
             spellCheck={false}
             autoComplete={index === 0 ? "one-time-code" : "off"}
             maxLength={1}
-            aria-label={`Voting code character ${index + 1}`}
+            aria-label={t('character', { number: index + 1 })}
             className={cx(
               "aspect-[.8] max-h-16 min-w-0 w-full rounded-[.55rem] border border-white/20 bg-linear-to-br from-[#26365a]/50 to-[#12152f]/70 text-center text-[clamp(1rem,6vw,1.45rem)] font-extrabold text-white caret-[#69e6ff] shadow-[inset_0_1px_hsl(0_0%_100%/.1)] outline-none transition focus:-translate-y-px focus:border-[#69e6ff] focus:shadow-[0_0_0_3px_hsl(188_100%_65%/.16),inset_0_1px_hsl(0_0%_100%/.16)] sm:rounded-[.7rem]",
               invalid && "border-rose-300/75 bg-none bg-rose-950/20",
@@ -301,6 +327,7 @@ export function PinErrorMessage({
 }
 
 export function GlassLoginCard({ children }: { children: ReactNode }) {
+  const { t } = useVoterLocale();
   return (
     <section className="relative mx-auto w-full max-w-lg animate-rise overflow-hidden rounded-[1.4rem] border border-white/15 bg-linear-to-br from-[#17254b]/75 to-[#090b20]/70 p-[1.1rem] shadow-[inset_0_1px_hsl(0_0%_100%/.15),0_30px_80px_hsl(240_85%_3%/.48)] before:absolute before:inset-x-[20%] before:top-0 before:h-px before:bg-linear-to-r before:from-transparent before:via-white/50 before:to-transparent sm:rounded-[1.75rem] sm:p-7">
       <img
@@ -309,13 +336,13 @@ export function GlassLoginCard({ children }: { children: ReactNode }) {
         alt="University of Technology (Yatanarpon Cyber City) logo"
       />
       <p className="m-0 text-center text-[.68rem] font-extrabold uppercase tracking-[.14em] text-[#69e6ff]">
-        2025–2026 Project Show
+        {t('projectShow')}
       </p>
       <h1 className="mt-1 text-center text-3xl font-bold tracking-[-.03em]">
-        Project Show Voting
+        {t('continueVote')}
       </h1>
       <p className="mx-auto mt-2.5 mb-5 max-w-sm text-center text-[.8rem] leading-[1.55] text-[#aeb9d4]">
-        Enter the 7-character code
+        {t('enterCode')}
       </p>
       {children}
     </section>
@@ -329,6 +356,7 @@ export function VotingPortalLogoutDialog({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
+  const { t } = useVoterLocale();
   return (
     <div
       className="fixed inset-0 z-60 grid place-items-center bg-[#020412bb] p-4 backdrop-blur-sm"
@@ -347,7 +375,7 @@ export function VotingPortalLogoutDialog({
           type="button"
           className="absolute top-3 right-3 grid h-10 w-10 cursor-pointer place-items-center rounded-xl border-0 bg-white/5"
           onClick={onCancel}
-          aria-label="Close logout confirmation"
+          aria-label={t('close')}
         >
           <X size={18} />
         </button>
@@ -355,18 +383,17 @@ export function VotingPortalLogoutDialog({
           <LockKeyhole />
         </span>
         <h2 className="mt-4 text-2xl font-bold" id="logout-title">
-          Exit Voting Portal?
+          {t('exitPortal')}?
         </h2>
         <p className="text-sm leading-[1.6] text-[#9eabc6]">
-          Your voting session will be cleared and you’ll return to the code
-          login page.
+          {t('security')}
         </p>
         <div className="mt-5 grid grid-cols-2 gap-3">
           <Button variant="quiet" onClick={onCancel}>
-            Stay here
+            {t('cancel')}
           </Button>
           <Button variant="danger" onClick={onConfirm}>
-            Exit Voting Portal
+            {t('exitPortal')}
           </Button>
         </div>
       </section>
@@ -383,6 +410,7 @@ export function GlassProjectCard({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const { locale, t } = useVoterLocale();
   return (
     <article
       className={cx(
@@ -399,19 +427,16 @@ export function GlassProjectCard({
           src={project.imageUrl}
           alt={`${project.title} project`}
         />
-        <span className="absolute top-2.5 left-2.5 rounded-lg border border-white/15 bg-[#071126cc] px-2 py-1.5 text-[.62rem] font-extrabold text-[#69e6ff] backdrop-blur-sm">
-          Project {project.projectNumber}
-        </span>
         {selected && (
           <b className="absolute top-2.5 right-2.5 flex items-center gap-1 rounded-full bg-linear-to-r from-[#6c66ff] to-[#29c9e7] px-2 py-1.5 text-[.62rem]">
             <Check size={16} />
-            Selected
+            {t('project')} · {t('recorded')}
           </b>
         )}
       </div>
       <div className="p-4">
         <p className="m-0 text-[.62rem] font-extrabold uppercase tracking-[.08em] text-[#69e6ff]">
-          {project.category}
+          {projectCategoryLabel(project.category, locale)}
         </p>
         <h3 className="mt-2 truncate text-lg font-bold">{project.title}</h3>
         <p className="mt-2 line-clamp-2 text-xs leading-[1.5] text-[#99a7c4]">
@@ -438,10 +463,11 @@ export function GlassVoteBar({
   onVote: () => void;
   busy?: boolean;
 }) {
+  const { t } = useVoterLocale();
   return (
     <aside
       className="fixed right-1/2 bottom-0 z-30 flex w-full translate-x-1/2 items-center gap-2 border border-x-0 border-b-0 border-cyan-200/20 bg-[#090d20]/85 p-2.5 pb-[max(.65rem,env(safe-area-inset-bottom))] shadow-[0_-10px_50px_hsl(235_90%_2%/.55),inset_0_1px_hsl(0_0%_100%/.1)] backdrop-blur-xl min-[641px]:bottom-[max(1rem,env(safe-area-inset-bottom))] min-[641px]:w-[min(42rem,calc(100%-1.5rem))] min-[641px]:rounded-[1.1rem] min-[641px]:border-x min-[641px]:border-b min-[641px]:p-2.5"
-      aria-label="Selected project"
+      aria-label={t('project')}
     >
       <img
         className="h-12 w-12 rounded-xl object-cover min-[641px]:w-14"
@@ -450,7 +476,7 @@ export function GlassVoteBar({
       />
       <p className="m-0 min-w-0 flex-1">
         <span className="hidden text-[.58rem] uppercase text-[#8593b1] min-[371px]:block">
-          Selected project
+          {t('project')}
         </span>
         <strong className="mt-px block truncate text-[.8rem]">
           {project.title}
@@ -461,10 +487,10 @@ export function GlassVoteBar({
         type="button"
         onClick={onCancel}
       >
-        Cancel
+        {t('cancel')}
       </button>
       <Button disabled={busy} onClick={onVote}>
-        {busy ? "Recording…" : "Vote Now"}
+        {busy ? t('record') : t('confirm')}
       </Button>
     </aside>
   );

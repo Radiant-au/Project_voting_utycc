@@ -44,7 +44,9 @@ export async function POST(request: NextRequest) {
       input_project_id: body.projectId,
     });
     const row = data?.[0];
-    if (error || row?.result !== "submitted" || !row.vote_id)
+    if (error) return json({ error: "vote_rejected" }, 409);
+    if (row?.result === "closed") return json({ error: "voting_closed" }, 409);
+    if (row?.result !== "submitted" || !row.vote_id)
       return json({ error: "vote_rejected" }, 409);
     (await cookies()).set(
       VOTER_COOKIE,
