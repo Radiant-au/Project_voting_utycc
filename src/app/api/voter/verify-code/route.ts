@@ -16,8 +16,8 @@ export async function POST(request: NextRequest) {
     const { data, error } = await getVoterSupabase().rpc('verify_voter_code', { input_code: code });
     const row = data?.[0];
     if (error || !row || !['student','teacher','visitor'].includes(row.category)) return json({ error: 'invalid_code' }, 400);
-    const session = createVoterSession(row.voting_code_id, row.category as VoterCategory);
+    const session = createVoterSession(row.voting_code_id, row.category as VoterCategory, row.has_voted);
     (await cookies()).set(VOTER_COOKIE, signSession(session), cookieOptions(SESSION_SECONDS));
-    return json({ session: { category: session.category, hasVoted: false } });
+    return json({ session: { category: session.category, hasVoted: session.hasVoted } });
   } catch { return json({ error: 'service_unavailable' }, 503); }
 }

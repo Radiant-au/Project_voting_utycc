@@ -5,7 +5,7 @@ export const VOTER_COOKIE = 'utycc-voter';
 export const SESSION_SECONDS = 15 * 60;
 export const RECEIPT_SECONDS = 30 * 60;
 
-export type VoterSession = { v: 1; kind: 'voter'; codeId: string; category: VoterCategory; sessionId: string; iat: number; exp: number };
+export type VoterSession = { v: 1; kind: 'voter'; codeId: string; category: VoterCategory; hasVoted: boolean; sessionId: string; iat: number; exp: number };
 export type ReceiptSession = { v: 1; kind: 'receipt'; voteId: string; iat: number; exp: number };
 export type Session = VoterSession | ReceiptSession;
 
@@ -32,14 +32,14 @@ export function readSession(value: string | undefined, now = Math.floor(Date.now
     if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
     const parsed = JSON.parse(Buffer.from(payload, 'base64url').toString()) as Partial<Session>;
     if (parsed.v !== 1 || typeof parsed.iat !== 'number' || typeof parsed.exp !== 'number' || parsed.exp <= now) return null;
-    if (parsed.kind === 'voter' && typeof parsed.codeId === 'string' && typeof parsed.sessionId === 'string' && ['student','teacher','visitor'].includes(String(parsed.category))) return parsed as VoterSession;
+    if (parsed.kind === 'voter' && typeof parsed.codeId === 'string' && typeof parsed.sessionId === 'string' && typeof parsed.hasVoted === 'boolean' && ['student','teacher','visitor'].includes(String(parsed.category))) return parsed as VoterSession;
     if (parsed.kind === 'receipt' && typeof parsed.voteId === 'string') return parsed as ReceiptSession;
     return null;
   } catch { return null; }
 }
 
-export function createVoterSession(codeId: string, category: VoterCategory, now = Math.floor(Date.now() / 1000)): VoterSession {
-  return { v: 1, kind: 'voter', codeId, category, sessionId: randomUUID(), iat: now, exp: now + SESSION_SECONDS };
+export function createVoterSession(codeId: string, category: VoterCategory, hasVoted = false, now = Math.floor(Date.now() / 1000)): VoterSession {
+  return { v: 1, kind: 'voter', codeId, category, hasVoted, sessionId: randomUUID(), iat: now, exp: now + SESSION_SECONDS };
 }
 
 export function createReceiptSession(voteId: string, now = Math.floor(Date.now() / 1000)): ReceiptSession {
@@ -47,4 +47,3 @@ export function createReceiptSession(voteId: string, now = Math.floor(Date.now()
 }
 
 export const cookieOptions = (maxAge: number) => ({ httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' as const, path: '/', maxAge });
-

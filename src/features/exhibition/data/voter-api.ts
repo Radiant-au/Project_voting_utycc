@@ -15,8 +15,6 @@ export const voterApi = {
   session: () => request<{ session: PublicVoterSession }>('/api/voter/session'),
   logout: () => request<{ ok: true }>('/api/voter/logout', { method: 'POST' }),
   projects: () => request<{ projects: Project[] }>('/api/voter/projects'),
-  project: (id: string) => request<{ project: Project }>(`/api/voter/projects/${encodeURIComponent(id)}`),
   vote: (projectId: string) => request<{ ok: true }>('/api/voter/vote', { method: 'POST', body: JSON.stringify({ projectId }) }),
   receipt: () => request<{ receipt: VoteReceipt }>('/api/voter/receipt'),
 };
-

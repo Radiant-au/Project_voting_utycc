@@ -4,5 +4,5 @@ import { voterSession } from '@/lib/voter/route-session';
 export async function GET() {
   const session = await voterSession();
   if (!session) return json({ error: 'unauthorized' }, 401);
-  return json({ session: { category: session.category, hasVoted: false } });
+  return json({ session: { category: session.category, hasVoted: session.hasVoted } });
 }

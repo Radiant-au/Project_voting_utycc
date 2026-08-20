@@ -13,7 +13,7 @@ assert.equal(isProjectId('p1/other'), false);
 assert.equal(isSameOrigin('https://vote.example/api/voter/vote', 'https://vote.example', 'same-origin'), true);
 assert.equal(isSameOrigin('https://vote.example/api/voter/vote', 'https://evil.example', 'cross-site'), false);
 
-const voter = createVoterSession('00000000-0000-0000-0000-000000000001', 'visitor', 100);
+const voter = createVoterSession('00000000-0000-0000-0000-000000000001', 'visitor', false, 100);
 const token = signSession(voter);
 assert.deepEqual(readSession(token, 101), voter);
 assert.equal(token.includes('ST7K2P9'), false);

@@ -37,7 +37,7 @@ export function Logo({ inverse = false }: { inverse?: boolean }) {
       </span>
       <span
         className={cx(
-          "font-display text-lg font-bold leading-none",
+          "font-serif text-lg font-bold leading-none",
           inverse ? "text-[#fcfaf4]" : "text-foreground",
         )}
       >
@@ -129,7 +129,7 @@ export function Toast({
     return () => clearTimeout(timer);
   }, [onClose]);
   return (
-    <div className="fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-xl border border-primary/30 bg-[#101d2c] px-4 py-3 text-sm font-semibold text-white shadow-[0_0_30px_hsl(188_100%_62%/.22)] animate-in">
+    <div className="fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 animate-rise items-center gap-3 rounded-xl border border-primary/30 bg-[#101d2c] px-4 py-3 text-sm font-semibold text-white shadow-[0_0_30px_hsl(188_100%_62%/.22)]">
       <Check size={16} className="text-primary" />
       {message}
       <button
@@ -222,7 +222,7 @@ export function CategoryCard({
         <Icon size={21} />
       </span>
       <span>
-        <span className="block font-display text-xl font-bold">
+        <span className="block font-serif text-xl font-bold">
           {categoryLabels[category]}
         </span>
         <span className="mt-1 block max-w-[220px] text-sm leading-5 text-muted-foreground">
@@ -254,7 +254,7 @@ export function Modal({
       <div
         role="dialog"
         aria-modal="true"
-        className="relative w-full max-w-md rounded-[1.5rem] bg-card p-6 shadow-2xl animate-in sm:p-8"
+        className="relative w-full max-w-md animate-rise rounded-[1.5rem] bg-card p-6 shadow-2xl sm:p-8"
       >
         <button
           onClick={onClose}
@@ -300,7 +300,7 @@ export function EmptyState({
       <div className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-secondary text-primary">
         {icon}
       </div>
-      <h3 className="mt-4 font-display text-xl font-bold">{title}</h3>
+      <h3 className="mt-4 font-serif text-xl font-bold">{title}</h3>
       <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
         {text}
       </p>
@@ -319,7 +319,7 @@ export function NotFound() {
     <main className="grid min-h-[100dvh] place-items-center p-6 text-center">
       <div>
         <Logo />
-        <h1 className="mt-12 font-display text-5xl font-bold">
+        <h1 className="mt-12 font-serif text-5xl font-bold">
           This room is empty.
         </h1>
         <p className="mt-3 text-muted-foreground">

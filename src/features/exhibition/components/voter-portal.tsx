@@ -21,21 +21,33 @@ import { categoryLabels } from "../data/data";
 import type { Project, VoterCategory } from "../data/types";
 import { Button, cx } from "./ui";
 
+export const primaryButton =
+  "mt-4 flex min-h-13 w-full cursor-pointer items-center justify-center gap-2 rounded-[.9rem] border border-white/15 bg-linear-to-r from-[#655cff] to-[#29c9e7] font-extrabold text-white shadow-[0_12px_26px_hsl(230_90%_50%/.24),inset_0_1px_#ffffff55] transition hover:-translate-y-px hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:bg-none disabled:bg-[#252d48]/75 disabled:text-[#74809d] disabled:shadow-none";
+export const voterPage =
+  "relative min-h-dvh overflow-x-clip bg-[radial-gradient(circle_at_75%_12%,hsl(255_78%_60%/.18),transparent_27rem),radial-gradient(circle_at_8%_80%,hsl(190_100%_55%/.12),transparent_30rem),linear-gradient(145deg,#050816_0%,#0b1230_48%,#111541_100%)] text-[#f6f8ff]";
+export const projectsPage = `${voterPage} bg-[radial-gradient(circle_at_85%_10%,hsl(255_78%_58%/.15),transparent_30rem),linear-gradient(145deg,#060918,#0b1230_55%,#09192d)]`;
+export const ambient =
+  "pointer-events-none fixed z-0 rounded-full opacity-50 blur-xl animate-ambient";
+
 export function UniversityBrand({ compact = false }: { compact?: boolean }) {
   return (
     <Link
       href="/"
-      className="university-brand"
+      className="flex min-w-0 items-center gap-2.5 text-white no-underline"
       aria-label="UTYCC voting portal home"
     >
-      <span className="university-mark" aria-hidden="true">
-        U
-      </span>
+      <img
+        className="h-[2.35rem] w-[2.35rem] shrink-0 rounded-[.7rem] border border-white/25 object-cover shadow-[0_0_22px_hsl(190_100%_68%/.22)] sm:h-[2.7rem] sm:w-[2.7rem] sm:rounded-[.85rem]"
+        src="https://res.cloudinary.com/dw7kk0lvp/image/upload/v1782748742/UTYCC_tttyy9.jpg"
+        alt="UTYCC logo"
+      />
       <span className="min-w-0">
-        <strong>UTYCC</strong>
-        <span>
+        <strong className="block text-[.82rem] tracking-[.1em] sm:text-[.95rem]">
+          UTYCC
+        </strong>
+        <span className="block max-w-[7.2rem] truncate text-[.56rem] leading-[1.2] tracking-[.03em] text-[#abb7d5] sm:max-w-64 sm:text-[.64rem]">
           {compact
-            ? "Project Exhibition"
+            ? "2025–2026 Project Show"
             : "University of Technology (Yatanarpon Cyber City)"}
         </span>
       </span>
@@ -46,13 +58,21 @@ export function UniversityBrand({ compact = false }: { compact?: boolean }) {
 export function LanguageSwitcher() {
   const [language, setLanguage] = useState<"MY" | "EN">("EN");
   return (
-    <div className="language-switch" aria-label="Language preview">
+    <div
+      className="inline-grid grid-cols-2 rounded-full border border-white/15 bg-[#090d1f]/50 p-[.2rem]"
+      aria-label="Language preview"
+    >
       {(["MY", "EN"] as const).map((item) => (
         <button
           key={item}
           type="button"
           aria-pressed={language === item}
           onClick={() => setLanguage(item)}
+          className={cx(
+            "min-h-8 min-w-8 cursor-pointer rounded-full border-0 bg-transparent text-[.68rem] font-extrabold text-[#92a0bf] min-[371px]:min-w-9",
+            language === item &&
+              "bg-linear-to-br from-[#756fff] to-[#45cee9] text-white shadow-[0_3px_12px_hsl(236_90%_55%/.3)]",
+          )}
         >
           {item}
         </button>
@@ -63,7 +83,17 @@ export function LanguageSwitcher() {
 
 export function VoterCategoryBadge({ category }: { category: VoterCategory }) {
   return (
-    <span className={`category-badge category-${category}`}>
+    <span
+      className={cx(
+        "hidden min-h-9 items-center whitespace-nowrap rounded-full border px-3 text-[.72rem] font-extrabold sm:inline-flex",
+        category === "student" &&
+          "border-cyan-200/20 bg-cyan-500/10 text-[#c9f6ff]",
+        category === "teacher" &&
+          "border-violet-200/25 bg-violet-500/15 text-[#ded9ff]",
+        category === "visitor" &&
+          "border-blue-200/25 bg-blue-500/15 text-[#d3e0ff]",
+      )}
+    >
       {categoryLabels[category]} Voter
     </span>
   );
@@ -77,21 +107,32 @@ export function GlassNavbar({
   onLogout?: () => void;
 }) {
   return (
-    <header className="glass-navbar">
+    <header className="relative z-25 mx-auto mt-[max(.5rem,env(safe-area-inset-top))] flex min-h-16 w-[calc(100%-1rem)] items-center justify-between gap-3 rounded-2xl border border-white/15 bg-[#080d20]/50 p-2 shadow-[inset_0_1px_hsl(0_0%_100%/.1),0_16px_45px_hsl(235_80%_2%/.24)] backdrop-blur-xl sm:mt-[max(.75rem,env(safe-area-inset-top))] sm:min-h-[4.4rem] sm:w-[min(calc(100%-1.5rem),74rem)] sm:rounded-[1.25rem] sm:px-3">
       <UniversityBrand compact />
-      <div className="glass-navbar-actions">
+      <div className="flex min-w-0 items-center justify-end gap-2">
         <LanguageSwitcher />
         {category && <VoterCategoryBadge category={category} />}
         {category && onLogout && (
-          <details className="session-menu">
-            <summary aria-label="Open PIN session menu">
+          <details className="relative">
+            <summary
+              className="flex h-9 w-9 cursor-pointer list-none items-center justify-center gap-px rounded-full border border-white/15 bg-[#1a2340]/75 [&::-webkit-details-marker]:hidden min-[371px]:h-[2.45rem] min-[371px]:w-[2.45rem]"
+              aria-label="Open PIN session menu"
+            >
               <UserRound size={18} />
               <ChevronDown size={14} />
             </summary>
-            <div>
-              <p>Verified voting session</p>
-              <strong>{categoryLabels[category]} Voter</strong>
-              <button type="button" onClick={onLogout}>
+            <div className="absolute right-0 top-[calc(100%+.6rem)] w-52 rounded-2xl border border-white/15 bg-[#090d20]/90 p-4 shadow-[0_18px_45px_#030515aa] backdrop-blur-lg">
+              <p className="m-0 text-[.68rem] text-[#909dbb]">
+                Verified voting session
+              </p>
+              <strong className="mt-[.2rem] block text-[.85rem]">
+                {categoryLabels[category]} Voter
+              </strong>
+              <button
+                className="mt-[.8rem] flex min-h-10 w-full cursor-pointer items-center gap-2 border-0 border-t border-white/15 bg-transparent text-[.76rem] font-bold text-[#ffb8c1]"
+                type="button"
+                onClick={onLogout}
+              >
                 <LogOut size={16} />
                 Exit Voting Portal
               </button>
@@ -117,11 +158,13 @@ export function VotingPinInput({
   invalid?: boolean;
 }) {
   const refs = useRef<Array<HTMLInputElement | null>>([]);
+
   const characters = Array.from(
     { length: 7 },
     (_, index) => value[index] || "",
   );
-  const setCharacters = (next: string[], focus?: number) => {
+
+  const setCharacters = (next: string[]) => {
     onChange(
       next
         .join("")
@@ -129,54 +172,81 @@ export function VotingPinInput({
         .replace(/[^A-Z0-9]/g, "")
         .slice(0, 7),
     );
-    if (focus !== undefined)
-      requestAnimationFrame(() => refs.current[focus]?.focus());
   };
+
   const update = (index: number, input: string) => {
     const character = input
       .toUpperCase()
       .replace(/[^A-Z0-9]/g, "")
       .slice(-1);
+
     const next = [...characters];
     next[index] = character;
-    setCharacters(next, character && index < 6 ? index + 1 : index);
-  };
-  const keyDown = (event: KeyboardEvent<HTMLInputElement>, index: number) => {
-    if (event.key === "Backspace") {
-      event.preventDefault();
-      const next = [...characters];
-      if (next[index]) next[index] = "";
-      else if (index > 0) next[index - 1] = "";
-      setCharacters(next, next[index] ? index : Math.max(0, index - 1));
-    } else if (event.key === "ArrowLeft" && index > 0)
-      refs.current[index - 1]?.focus();
-    else if (event.key === "ArrowRight" && index < 6)
+
+    setCharacters(next);
+
+    if (character && index < 6) {
       refs.current[index + 1]?.focus();
-    else if (event.key === "Enter" && value.length === 7) onSubmit();
-    else if (event.key.length === 1 && !/[a-z0-9]/i.test(event.key))
-      event.preventDefault();
+    }
   };
+
+  const keyDown = (event: KeyboardEvent<HTMLInputElement>, index: number) => {
+    if (event.key === "ArrowLeft" && index > 0) {
+      event.preventDefault();
+      refs.current[index - 1]?.focus();
+    } else if (event.key === "ArrowRight" && index < 6) {
+      event.preventDefault();
+      refs.current[index + 1]?.focus();
+    } else if (event.key === "Backspace") {
+      // If current input is empty, move to the previous input
+      // and clear it.
+      if (!characters[index] && index > 0) {
+        event.preventDefault();
+
+        const next = [...characters];
+        next[index - 1] = "";
+
+        setCharacters(next);
+
+        const previous = refs.current[index - 1];
+        previous?.focus();
+        previous?.select();
+      }
+    } else if (event.key === "Enter" && value.length === 7) {
+      event.preventDefault();
+      onSubmit();
+    } else if (event.key.length === 1 && !/[a-z0-9]/i.test(event.key)) {
+      event.preventDefault();
+    }
+  };
+
   const paste = (event: ClipboardEvent<HTMLInputElement>) => {
     const pasted = event.clipboardData
       .getData("text")
       .toUpperCase()
       .replace(/[^A-Z0-9]/g, "")
       .slice(0, 7);
+
     if (!pasted) return;
+
     event.preventDefault();
+
     onChange(pasted);
-    requestAnimationFrame(() =>
-      refs.current[Math.min(pasted.length, 7) - 1]?.focus(),
-    );
+
+    requestAnimationFrame(() => {
+      refs.current[Math.min(pasted.length, 7) - 1]?.focus();
+    });
   };
+
   return (
     <fieldset
-      className={cx("pin-fieldset", invalid && "is-invalid")}
+      className="m-0 min-w-0 border-0 p-0"
       disabled={disabled}
       aria-invalid={invalid}
     >
       <legend className="sr-only">Seven-character voting code</legend>
-      <div className="pin-grid">
+
+      <div className="grid grid-cols-7 gap-[.18rem] min-[371px]:gap-[.22rem] sm:gap-[clamp(.25rem,1.5vw,.52rem)]">
         {characters.map((character, index) => (
           <input
             key={index}
@@ -195,6 +265,10 @@ export function VotingPinInput({
             autoComplete={index === 0 ? "one-time-code" : "off"}
             maxLength={1}
             aria-label={`Voting code character ${index + 1}`}
+            className={cx(
+              "aspect-[.8] max-h-16 min-w-0 w-full rounded-[.55rem] border border-white/20 bg-linear-to-br from-[#26365a]/50 to-[#12152f]/70 text-center text-[clamp(1rem,6vw,1.45rem)] font-extrabold text-white caret-[#69e6ff] shadow-[inset_0_1px_hsl(0_0%_100%/.1)] outline-none transition focus:-translate-y-px focus:border-[#69e6ff] focus:shadow-[0_0_0_3px_hsl(188_100%_65%/.16),inset_0_1px_hsl(0_0%_100%/.16)] sm:rounded-[.7rem]",
+              invalid && "border-rose-300/75 bg-none bg-rose-950/20",
+            )}
           />
         ))}
       </div>
@@ -211,7 +285,12 @@ export function PinErrorMessage({
 }) {
   return (
     <p
-      className={`pin-message pin-message-${tone}`}
+      className={cx(
+        "mt-3 flex items-start gap-2 rounded-xl px-3 py-2.5 text-xs leading-[1.4] [&>svg]:mt-px [&>svg]:shrink-0",
+        tone === "error" && "bg-rose-900/25 text-[#ffc6cf]",
+        tone === "success" && "bg-emerald-900/25 text-[#bff8e6]",
+        tone === "info" && "bg-sky-900/25 text-[#c8eaff]",
+      )}
       role={tone === "error" ? "alert" : "status"}
       aria-live="polite"
     >
@@ -223,15 +302,20 @@ export function PinErrorMessage({
 
 export function GlassLoginCard({ children }: { children: ReactNode }) {
   return (
-    <section className="glass-login-card animate-in">
-      <div className="login-logo" aria-hidden="true">
-        U
-      </div>
-      <p className="login-kicker">UTYCC Project Exhibition</p>
-      <h1>Voting Portal</h1>
-      <p className="login-copy">
-        Enter the voting code provided by the event organizers. Your voter
-        category will be assigned automatically.
+    <section className="relative mx-auto w-full max-w-lg animate-rise overflow-hidden rounded-[1.4rem] border border-white/15 bg-linear-to-br from-[#17254b]/75 to-[#090b20]/70 p-[1.1rem] shadow-[inset_0_1px_hsl(0_0%_100%/.15),0_30px_80px_hsl(240_85%_3%/.48)] before:absolute before:inset-x-[20%] before:top-0 before:h-px before:bg-linear-to-r before:from-transparent before:via-white/50 before:to-transparent sm:rounded-[1.75rem] sm:p-7">
+      <img
+        className="mx-auto mb-3 block h-[3.4rem] w-[3.4rem] rounded-2xl border border-white/35 object-cover shadow-[0_0_28px_hsl(190_100%_68%/.22)]"
+        src="https://res.cloudinary.com/dw7kk0lvp/image/upload/v1782748742/UTYCC_tttyy9.jpg"
+        alt="University of Technology (Yatanarpon Cyber City) logo"
+      />
+      <p className="m-0 text-center text-[.68rem] font-extrabold uppercase tracking-[.14em] text-[#69e6ff]">
+        2025–2026 Project Show
+      </p>
+      <h1 className="mt-1 text-center text-3xl font-bold tracking-[-.03em]">
+        Project Show Voting
+      </h1>
+      <p className="mx-auto mt-2.5 mb-5 max-w-sm text-center text-[.8rem] leading-[1.55] text-[#aeb9d4]">
+        Enter the 7-character code
       </p>
       {children}
     </section>
@@ -247,35 +331,37 @@ export function VotingPortalLogoutDialog({
 }) {
   return (
     <div
-      className="dialog-backdrop"
+      className="fixed inset-0 z-60 grid place-items-center bg-[#020412bb] p-4 backdrop-blur-sm"
       role="presentation"
       onMouseDown={(event) =>
         event.target === event.currentTarget && onCancel()
       }
     >
       <section
-        className="glass-dialog"
+        className="relative w-full max-w-[27rem] rounded-[1.4rem] border border-white/15 bg-[#090d20]/90 p-6 shadow-[0_30px_80px_#02030ddd]"
         role="dialog"
         aria-modal="true"
         aria-labelledby="logout-title"
       >
         <button
           type="button"
-          className="dialog-close"
+          className="absolute top-3 right-3 grid h-10 w-10 cursor-pointer place-items-center rounded-xl border-0 bg-white/5"
           onClick={onCancel}
           aria-label="Close logout confirmation"
         >
           <X size={18} />
         </button>
-        <span className="dialog-icon">
+        <span className="grid h-12 w-12 place-items-center rounded-[.9rem] bg-cyan-400/10 text-[#69e6ff]">
           <LockKeyhole />
         </span>
-        <h2 id="logout-title">Exit Voting Portal?</h2>
-        <p>
+        <h2 className="mt-4 text-2xl font-bold" id="logout-title">
+          Exit Voting Portal?
+        </h2>
+        <p className="text-sm leading-[1.6] text-[#9eabc6]">
           Your voting session will be cleared and you’ll return to the code
           login page.
         </p>
-        <div>
+        <div className="mt-5 grid grid-cols-2 gap-3">
           <Button variant="quiet" onClick={onCancel}>
             Stay here
           </Button>
@@ -292,44 +378,49 @@ export function GlassProjectCard({
   project,
   selected,
   onSelect,
-  onDetails,
 }: {
   project: Project;
   selected: boolean;
   onSelect: () => void;
-  onDetails: () => void;
 }) {
   return (
     <article
-      className={cx("glass-project-card", selected && "is-selected")}
+      className={cx(
+        "group h-full cursor-pointer overflow-hidden rounded-[1.25rem] border border-white/15 bg-linear-to-br from-[#1c294e]/70 to-[#0c1028]/80 shadow-[inset_0_1px_hsl(0_0%_100%/.07),0_16px_35px_hsl(235_85%_3%/.24)] backdrop-blur-md transition hover:-translate-y-[3px] hover:border-cyan-200/40",
+        selected &&
+          "-translate-y-[3px] border-[#69e6ff] shadow-[0_0_0_2px_hsl(188_100%_60%/.12),0_16px_42px_hsl(188_90%_40%/.2)]",
+      )}
       onClick={onSelect}
       data-testid={`card-project-${project.id}`}
     >
-      <div className="project-image">
-        <img src={project.imageUrl} alt={`${project.title} project`} />
-        <span>Project {project.projectNumber}</span>
+      <div className="relative aspect-[1.48] overflow-hidden bg-[#10172e]">
+        <img
+          className="h-full w-full object-cover transition duration-400 group-hover:scale-[1.035]"
+          src={project.imageUrl}
+          alt={`${project.title} project`}
+        />
+        <span className="absolute top-2.5 left-2.5 rounded-lg border border-white/15 bg-[#071126cc] px-2 py-1.5 text-[.62rem] font-extrabold text-[#69e6ff] backdrop-blur-sm">
+          Project {project.projectNumber}
+        </span>
         {selected && (
-          <b>
+          <b className="absolute top-2.5 right-2.5 flex items-center gap-1 rounded-full bg-linear-to-r from-[#6c66ff] to-[#29c9e7] px-2 py-1.5 text-[.62rem]">
             <Check size={16} />
             Selected
           </b>
         )}
       </div>
-      <div className="project-card-body">
-        <p className="project-category">{project.category}</p>
-        <h3>{project.title}</h3>
-        <p>{project.shortDescription}</p>
-        <footer>
-          <span>{project.teamName}</span>
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              onDetails();
-            }}
-          >
-            View Details
-          </button>
+      <div className="p-4">
+        <p className="m-0 text-[.62rem] font-extrabold uppercase tracking-[.08em] text-[#69e6ff]">
+          {project.category}
+        </p>
+        <h3 className="mt-2 truncate text-lg font-bold">{project.title}</h3>
+        <p className="mt-2 line-clamp-2 text-xs leading-[1.5] text-[#99a7c4]">
+          {project.shortDescription}
+        </p>
+        <footer className="mt-3.5 min-w-0 border-t border-white/15 pt-3">
+          <span className="truncate text-[.66rem] font-bold text-[#8492b0]">
+            {project.teamName}
+          </span>
         </footer>
       </div>
     </article>
@@ -340,22 +431,41 @@ export function GlassVoteBar({
   project,
   onCancel,
   onVote,
+  busy = false,
 }: {
   project: Project;
   onCancel: () => void;
   onVote: () => void;
+  busy?: boolean;
 }) {
   return (
-    <aside className="glass-vote-bar" aria-label="Selected project">
-      <img src={project.imageUrl} alt="" />
-      <p>
-        <span>Selected project</span>
-        <strong>{project.title}</strong>
+    <aside
+      className="fixed right-1/2 bottom-0 z-30 flex w-full translate-x-1/2 items-center gap-2 border border-x-0 border-b-0 border-cyan-200/20 bg-[#090d20]/85 p-2.5 pb-[max(.65rem,env(safe-area-inset-bottom))] shadow-[0_-10px_50px_hsl(235_90%_2%/.55),inset_0_1px_hsl(0_0%_100%/.1)] backdrop-blur-xl min-[641px]:bottom-[max(1rem,env(safe-area-inset-bottom))] min-[641px]:w-[min(42rem,calc(100%-1.5rem))] min-[641px]:rounded-[1.1rem] min-[641px]:border-x min-[641px]:border-b min-[641px]:p-2.5"
+      aria-label="Selected project"
+    >
+      <img
+        className="h-12 w-12 rounded-xl object-cover min-[641px]:w-14"
+        src={project.imageUrl}
+        alt=""
+      />
+      <p className="m-0 min-w-0 flex-1">
+        <span className="hidden text-[.58rem] uppercase text-[#8593b1] min-[371px]:block">
+          Selected project
+        </span>
+        <strong className="mt-px block truncate text-[.8rem]">
+          {project.title}
+        </strong>
       </p>
-      <button type="button" onClick={onCancel}>
+      <button
+        className="hidden min-h-10 cursor-pointer border-0 bg-transparent px-2 text-[.7rem] font-bold text-[#a9b4ce] min-[641px]:block"
+        type="button"
+        onClick={onCancel}
+      >
         Cancel
       </button>
-      <Button onClick={onVote}>Vote Now</Button>
+      <Button disabled={busy} onClick={onVote}>
+        {busy ? "Recording…" : "Vote Now"}
+      </Button>
     </aside>
   );
 }

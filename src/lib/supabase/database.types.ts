@@ -43,7 +43,7 @@ export type Database = {
       list_voting_codes: { Args: { input_category?: string | null; input_status?: string | null }; Returns: Database['public']['Tables']['voting_codes']['Row'][] };
       submit_vote: { Args: { input_code: string; input_project_id: string }; Returns: { result: string; vote_id: string | null }[] };
       verify_voting_code: { Args: { input_code: string }; Returns: { category: string | null; result: string }[] };
-      verify_voter_code: { Args: { input_code: string }; Returns: { category: string; voting_code_id: string }[] };
+      verify_voter_code: { Args: { input_code: string }; Returns: { category: string; has_voted: boolean; voting_code_id: string }[] };
       check_voter_rate_limit: { Args: { input_action: string; input_fingerprint: string }; Returns: { allowed: boolean; retry_after: number }[] };
       submit_voter_vote: { Args: { input_project_id: string; input_voting_code_id: string }; Returns: { result: string; vote_id: string | null }[] };
     };
