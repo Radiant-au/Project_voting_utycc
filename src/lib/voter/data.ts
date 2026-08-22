@@ -1,4 +1,5 @@
 import 'server-only';
+import { unstable_cache } from 'next/cache';
 import { projectFallbackImage } from '@/features/exhibition/data/project-images';
 import type { Project } from '@/features/exhibition/data/types';
 import { getVoterSupabase } from '@/lib/supabase/voter-server';
@@ -21,11 +22,11 @@ export const publicProject = (row: ProjectRow): Project => ({
 
 const columns = 'id,title,short_description,full_description,category,team_name,image_url,features,is_active,created_at' as const;
 
-export async function getProjects() {
+export const getProjects = unstable_cache(async () => {
   const { data, error } = await getVoterSupabase().from('projects').select(columns).eq('is_active', true).order('project_number').limit(100);
   if (error) throw error;
   return (data as ProjectRow[]).map(publicProject);
-}
+}, ['public-voter-projects'], { revalidate: 30 });
 
 export async function getProject(id: string) {
   const { data, error } = await getVoterSupabase().from('projects').select(columns).eq('id', id).eq('is_active', true).maybeSingle();

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import {
   useRef,
   useState,
@@ -422,10 +423,13 @@ export function GlassProjectCard({
       data-testid={`card-project-${project.id}`}
     >
       <div className="relative aspect-[1.48] overflow-hidden bg-[#10172e]">
-        <img
+        <Image
           className="h-full w-full object-cover transition duration-400 group-hover:scale-[1.035]"
           src={project.imageUrl}
           alt={`${project.title} project`}
+          fill
+          sizes="(max-width: 1024px) 50vw, 33vw"
+          quality={60}
         />
         {selected && (
           <b className="absolute top-2.5 right-2.5 flex items-center gap-1 rounded-full bg-linear-to-r from-[#6c66ff] to-[#29c9e7] px-2 py-1.5 text-[.62rem]">
@@ -469,10 +473,13 @@ export function GlassVoteBar({
       className="fixed right-1/2 bottom-0 z-30 flex w-full translate-x-1/2 items-center gap-2 border border-x-0 border-b-0 border-cyan-200/20 bg-[#090d20]/85 p-2.5 pb-[max(.65rem,env(safe-area-inset-bottom))] shadow-[0_-10px_50px_hsl(235_90%_2%/.55),inset_0_1px_hsl(0_0%_100%/.1)] backdrop-blur-xl min-[641px]:bottom-[max(1rem,env(safe-area-inset-bottom))] min-[641px]:w-[min(42rem,calc(100%-1.5rem))] min-[641px]:rounded-[1.1rem] min-[641px]:border-x min-[641px]:border-b min-[641px]:p-2.5"
       aria-label={t('project')}
     >
-      <img
+      <Image
         className="h-12 w-12 rounded-xl object-cover min-[641px]:w-14"
         src={project.imageUrl}
         alt=""
+        width={56}
+        height={48}
+        quality={60}
       />
       <p className="m-0 min-w-0 flex-1">
         <span className="hidden text-[.58rem] uppercase text-[#8593b1] min-[371px]:block">

@@ -39,7 +39,7 @@ export function HomePage() {
       const { session } = await voterApi.verifyCode(pin);
       setCategory(categoryLabel(session.category));
       setStatus("success");
-      setTimeout(() => router.replace("/projects"), 650);
+      setTimeout(() => router.replace(session.hasVoted ? "/vote/success" : "/projects"), 650);
     } catch (failure) {
       const reason =
         failure instanceof Error ? failure.message : "network-error";

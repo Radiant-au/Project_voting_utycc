@@ -8,6 +8,9 @@
     "start": "next start",
     "test:voter": "node --experimental-strip-types scripts/check-pin-session.ts",
     "test:admin-projects": "node --experimental-strip-types scripts/check-admin-projects.ts",
+    "test:vote-history": "node --experimental-strip-types scripts/check-code-vote-history.ts",
+    "test:live-reveal": "node --experimental-strip-types scripts/check-live-results-reveal.ts",
+    "test:visitor-pdf": "node --experimental-strip-types scripts/check-visitor-pass-pdf.ts",
     "test:pin": "npm run test:voter",
     "test:voting-features": "node --experimental-strip-types scripts/check-voting-features.ts",
     "test:voting-db": "node --experimental-strip-types scripts/check-voting-concurrency.ts",
@@ -18,7 +21,8 @@
     "@tailwindcss/postcss": "^4.3.3",
     "lucide-react": "^1.31.0",
     "next": "^16.0.0",
-    "qrcode.react": "^4.2.0",
+    "pdf-lib": "^1.17.1",
+    "qrcode": "^1.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^3.10.1",
@@ -26,6 +30,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "typescript": "5.8.3"

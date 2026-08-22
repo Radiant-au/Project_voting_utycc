@@ -17,7 +17,7 @@ export function AccessPage({ code }: { code: string }) {
     voterApi.verifyCode(code).then(({ session }) => {
       if (!active) return;
       if (session.category !== 'visitor') { void voterApi.logout(); setError(true); return; }
-      router.replace('/projects');
+      router.replace(session.hasVoted ? '/vote/success' : '/projects');
     }).catch(() => active && setError(true));
     return () => { active = false; };
   }, [code, router]);

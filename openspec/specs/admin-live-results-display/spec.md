@@ -19,11 +19,26 @@ The system SHALL provide an authenticated admin live-display route that ranks pr
 - **THEN** the display shows a presentation-ready empty state instead of fabricated ranking data
 
 ### Requirement: Presentation-safe project identity
-Each live-display card SHALL show rank, hidden project code, category, and total points without showing the internal project number or project title.
+Before results are revealed, each live-display card SHALL show only rank, hidden project code, and total points without showing the project photo, title, team, or internal project number. After an administrator reveals results, each card SHALL additionally show the project photo, title, team, and category while keeping the project code and points visually secondary.
 
-#### Scenario: Ranked project is rendered
-- **WHEN** a project appears in the top five
-- **THEN** viewers can identify it only by hidden project code and category while its internal number and title remain absent
+#### Scenario: Ranked project is rendered before reveal
+- **WHEN** a project appears in the top five while results are hidden
+- **THEN** viewers can identify it only by rank and hidden project code while its photo, title, team, category, and internal number remain absent
+
+#### Scenario: Ranked project is revealed
+- **WHEN** an administrator enables the reveal setting
+- **THEN** each ranked card shows its photo, title, team, and category with smaller hidden-code and point labels while the internal project number remains absent
+
+### Requirement: Realtime result reveal control
+The authenticated settings page SHALL persist a live-results reveal toggle, and the open live display SHALL apply reveal-state changes through its existing Supabase Realtime connection without a page reload.
+
+#### Scenario: Administrator reveals results
+- **WHEN** an administrator enables reveal while the live display is connected
+- **THEN** the live display shows project details without requiring a manual refresh
+
+#### Scenario: Administrator hides results again
+- **WHEN** an administrator disables reveal
+- **THEN** the live display removes project photos, titles, teams, and categories while retaining rank, hidden project code, and points
 
 ### Requirement: TV-sized academic presentation
 The live display SHALL use a responsive full-screen academic-tech layout with legible type, strong contrast, restrained motion, and cards sized for a television or projector.
@@ -42,4 +57,3 @@ The live display SHALL communicate initial loading and failed live-update states
 #### Scenario: Live updates disconnect
 - **WHEN** the live results connection fails after a ranking has loaded
 - **THEN** the page keeps the last valid values visible and indicates that updates are temporarily disconnected
-

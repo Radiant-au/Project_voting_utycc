@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Search, ShieldCheck, Zap } from "lucide-react";
 import { projectCategoryOptions } from "../../data/project-categories";
 import { voterApi, type PublicVoterSession } from "../../data/voter-api";
@@ -41,16 +42,12 @@ export function ProjectsPage() {
   const [votingOpen, setVotingOpen] = useState<boolean | null>(null);
 
   useEffect(() => {
-    Promise.all([
-      voterApi.session(),
-      voterApi.projects(),
-      voterApi.status().catch(() => null),
-    ])
-      .then(([sessionResponse, projectResponse, statusResponse]) => {
-        setSession(sessionResponse.session);
-        setItems(projectResponse.projects);
-        setVoted(sessionResponse.session.hasVoted);
-        setVotingOpen(statusResponse?.status.isOpen ?? null);
+    voterApi.projects()
+      .then(({ session: nextSession, projects, status }) => {
+        setSession(nextSession);
+        setItems(projects);
+        setVoted(nextSession.hasVoted);
+        setVotingOpen(status.isOpen);
       })
       .catch(() => router.replace("/"))
       .finally(() => setLoading(false));
@@ -63,7 +60,6 @@ export function ProjectsPage() {
         .then(({ status }) => setVotingOpen(status.isOpen))
         .catch(() => setVotingOpen(null));
     };
-    loadStatus();
     window.addEventListener("focus", loadStatus);
     return () => window.removeEventListener("focus", loadStatus);
   }, []);
@@ -262,10 +258,13 @@ export function ProjectsPage() {
       )}
       {confirming && selectedProject && (
         <Modal onClose={() => !submitting && setConfirming(false)}>
-          <img
+          <Image
             src={selectedProject.imageUrl}
             alt=""
             className="h-28 w-full rounded-xl object-cover"
+            width={432}
+            height={112}
+            quality={60}
           />
           <h2 className="mt-3 text-2xl font-bold">
             {t("confirmVote", { title: selectedProject.title })}

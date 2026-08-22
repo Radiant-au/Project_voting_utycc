@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Check } from 'lucide-react';
 import { voterApi, type VoteReceipt } from '../../data/voter-api';
 import { Button } from '../../components/ui';
@@ -9,16 +10,20 @@ import { GlassNavbar, voterPage } from '../../components/voter-portal';
 import { useVoterLocale } from '../../i18n';
 
 export function VoteSuccessPage() {
-  const { t, categoryLabel } = useVoterLocale();
+  const { locale, t, categoryLabel } = useVoterLocale();
   const router = useRouter();
   const [receipt, setReceipt] = useState<VoteReceipt | null>();
+  const [unavailable, setUnavailable] = useState(false);
 
   useEffect(() => {
-    voterApi.receipt().then(({ receipt }) => setReceipt(receipt)).catch(() => router.replace('/'));
-  }, [router]);
+    voterApi.receipt().then(({ receipt }) => setReceipt(receipt)).catch(() => setUnavailable(true));
+  }, []);
+
+  const finish = () => void voterApi.logout().finally(() => router.replace('/'));
 
   const project = receipt?.project;
-  if (!receipt || !project) return <main className={voterPage} />;
+  if (unavailable) return <main className={`${voterPage} grid place-items-center px-4`}><section className="relative z-[1] w-full max-w-md rounded-[1.6rem] border border-white/15 bg-[#111936]/70 p-6 text-center"><h1 className="text-3xl">{t('voteUnavailable')}</h1><p className="mt-3 text-sm text-[#9faac4]">{t('voteUnavailableText')}</p><div className="mt-5"><Button onClick={finish}>{t('tryCodeAgain')}</Button></div></section></main>;
+  if (!receipt || !project) return <main className={`${voterPage} grid place-items-center`}><p className="relative z-[1] text-sm text-[#9faac4]" role="status">{t('loadingReceipt')}</p></main>;
 
   return <main className={`${voterPage} pb-[max(2rem,env(safe-area-inset-bottom))]`}>
     <GlassNavbar category={receipt.category} />
@@ -28,18 +33,19 @@ export function VoteSuccessPage() {
       <h1 className="mt-2 text-4xl leading-[1.05]">{t('recordedTitle')}</h1>
       <p className="mt-3 text-[.82rem] text-[#9faac4]">{t('thankYou')}</p>
       <article className="mt-5 overflow-hidden rounded-2xl border border-white/15 bg-[#090d20]/55 text-left">
-        <img className="aspect-[2.2] w-full object-cover" src={project.imageUrl} alt={`${project.title} project`} />
+        <Image className="aspect-[2.2] w-full object-cover" src={project.imageUrl} alt={project.title} width={432} height={196} quality={60} />
         <div className="p-4">
           <h2 className="mt-2 text-lg font-bold">{project.title}</h2>
           <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-white/15 pt-3 [&_dt]:text-[.62rem] [&_dt]:text-[#7f8daa] [&_dd]:mt-1 [&_dd]:text-xs [&_dd]:font-extrabold">
             <div><dt>{t('yourCategory')}</dt><dd>{categoryLabel(receipt.category)} {t('voter')}</dd></div>
             <div><dt>{t('receiptId')}</dt><dd>{receipt.voteId.slice(0, 8).toUpperCase()}</dd></div>
             <div><dt>{t('status')}</dt><dd>{t('recorded')}</dd></div>
+            <div><dt>{t('recordedAt')}</dt><dd>{new Date(receipt.createdAt).toLocaleString(locale === 'my' ? 'my-MM' : 'en-US')}</dd></div>
           </dl>
         </div>
       </article>
       <div className="mt-4">
-        <Button onClick={() => router.replace('/')}>{t('finish')}</Button>
+        <Button onClick={finish}>{t('finish')}</Button>
       </div>
     </section>
   </main>;

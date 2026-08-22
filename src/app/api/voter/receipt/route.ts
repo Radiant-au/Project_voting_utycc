@@ -1,13 +1,14 @@
 import { getVoterSupabase } from '@/lib/supabase/voter-server';
 import { getProject } from '@/lib/voter/data';
 import { json } from '@/lib/voter/http';
-import { receiptSession } from '@/lib/voter/route-session';
+import { receiptSession, returningVoterSession } from '@/lib/voter/route-session';
 
 export async function GET() {
-  const session = await receiptSession();
+  const session = await receiptSession() ?? await returningVoterSession();
   if (!session) return json({ error: 'unauthorized' }, 401);
   try {
-    const { data, error } = await getVoterSupabase().from('votes').select('id,project_id,category,created_at').eq('id', session.voteId).maybeSingle();
+    const query = getVoterSupabase().from('votes').select('id,project_id,category,created_at');
+    const { data, error } = await (session.kind === 'receipt' ? query.eq('id', session.voteId) : query.eq('voting_code_id', session.codeId)).maybeSingle();
     if (error || !data) return json({ error: 'not_found' }, 404);
     const project = await getProject(data.project_id);
     if (!project) return json({ error: 'not_found' }, 404);
