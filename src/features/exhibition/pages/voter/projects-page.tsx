@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Search, ShieldCheck, Zap } from "lucide-react";
 import { projectCategoryOptions } from "../../data/project-categories";
-import { voterApi, type PublicVoterSession } from "../../data/voter-api";
+import { VoterApiError, voterApi, type PublicVoterSession } from "../../data/voter-api";
 import type { Project } from "../../data/types";
 import {
   Badge,
@@ -36,7 +36,8 @@ export function ProjectsPage() {
   const [selected, setSelected] = useState("");
   const [voted, setVoted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [voteError, setVoteError] = useState(false);
+  const [voteError, setVoteError] = useState("");
+  const voteKey = useRef<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [logout, setLogout] = useState(false);
   const [votingOpen, setVotingOpen] = useState<boolean | null>(null);
@@ -91,15 +92,17 @@ export function ProjectsPage() {
   const vote = async () => {
     if (!selectedProject || submitting || votingOpen !== true) return;
     setSubmitting(true);
-    setVoteError(false);
+    setVoteError("");
     try {
-      await voterApi.vote(selectedProject.id);
+      voteKey.current ??= crypto.randomUUID();
+      await voterApi.vote(selectedProject.id, voteKey.current);
       router.replace("/vote/success");
     } catch (failure) {
       setSubmitting(false);
-      if (failure instanceof Error && failure.message === "voting_closed")
+      const reason = failure instanceof Error ? failure.message : "request_failed";
+      if (reason === "voting_closed")
         setVotingOpen(false);
-      setVoteError(true);
+      setVoteError(failure instanceof VoterApiError && failure.status === 429 ? `Too many submissions. Please wait ${failure.retryAfter ?? 60} seconds and retry.` : reason === "vote_session_expired" ? "Your voting session expired. Enter your code again." : reason === "vote_rejected" ? "This voting code has already been used." : "We could not confirm the vote. Retry safely; your previous request will not duplicate it.");
     }
   };
 
@@ -225,7 +228,7 @@ export function ProjectsPage() {
                   onSelect={() =>
                     !voted &&
                     votingOpen === true &&
-                    setSelected(selected === project.id ? "" : project.id)
+                    (voteKey.current = null, setSelected(selected === project.id ? "" : project.id))
                   }
                 />
               </div>
@@ -248,9 +251,10 @@ export function ProjectsPage() {
         <>
           <GlassVoteBar
             project={selectedProject}
-            onCancel={() => setSelected("")}
+            onCancel={() => { voteKey.current = null; setSelected(""); }}
             onVote={() => {
-              setVoteError(false);
+              voteKey.current = null;
+              setVoteError("");
               setConfirming(true);
             }}
           />
@@ -275,7 +279,7 @@ export function ProjectsPage() {
           </p>
           {voteError && (
             <p className="mt-3 text-sm font-bold text-destructive" role="alert">
-              {t("voteFailed")}
+              {voteError}
             </p>
           )}
           <div className="mt-6 grid grid-cols-2 gap-3">

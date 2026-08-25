@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { LockKeyhole, ShieldCheck, Sparkles } from "lucide-react";
-import { voterApi } from "../../data/voter-api";
+import { VoterApiError, voterApi } from "../../data/voter-api";
 import {
   GlassLoginCard,
   GlassNavbar,
@@ -22,7 +22,7 @@ export function HomePage() {
   const [status, setStatus] = useState<"idle" | "verifying" | "success">(
     "idle",
   );
-  const [error, setError] = useState<"invalid" | "rate_limited" | "network-error" | "">("");
+  const [error, setError] = useState<string>("");
   const [category, setCategory] = useState("");
 
   const changePin = (value: string) => {
@@ -41,16 +41,9 @@ export function HomePage() {
       setStatus("success");
       setTimeout(() => router.replace(session.hasVoted ? "/vote/success" : "/projects"), 650);
     } catch (failure) {
-      const reason =
-        failure instanceof Error ? failure.message : "network-error";
+      const reason = failure instanceof Error ? failure.message : "network-error";
       setStatus("idle");
-      setError(
-        reason === "rate_limited"
-          ? "rate_limited"
-          : reason === "invalid_code"
-            ? "invalid"
-            : "network-error",
-      );
+      setError(failure instanceof VoterApiError && failure.status === 429 ? `Please wait ${failure.retryAfter ?? 60} seconds, then try again.` : reason === "code_used" ? "This voting code has already been used." : reason === "invalid_code" ? t('invalidCode') : t('serviceUnavailable'));
     }
   };
 
@@ -90,7 +83,7 @@ export function HomePage() {
               disabled={status === "verifying" || status === "success"}
               invalid={Boolean(error)}
             />
-            {error && <PinErrorMessage>{error === 'invalid' ? t('invalidCode') : error === 'rate_limited' ? t('rateLimited') : t('serviceUnavailable')}</PinErrorMessage>}
+            {error && <PinErrorMessage>{error}</PinErrorMessage>}
             {status === "success" && (
               <PinErrorMessage tone="success">
                 {t('welcome', { category })}

@@ -17,8 +17,8 @@ export type Database = {
         Relationships: [];
       };
       projects: {
-        Row: { category: 'Information Science' | 'Computer Engineering' | 'Electronic Engineering' | 'Precision Engineering' | 'Advanced Material Engineering'; created_at: string; features: string[]; full_description: string; hidden_project_code: string; id: string; image_url: string; is_active: boolean; project_number: string; short_description: string; team_name: string; title: string };
-        Insert: { category: 'Information Science' | 'Computer Engineering' | 'Electronic Engineering' | 'Precision Engineering' | 'Advanced Material Engineering'; created_at?: string; features?: string[]; full_description: string; hidden_project_code: string; id: string; image_url: string; is_active?: boolean; project_number: string; short_description: string; team_name: string; title: string };
+        Row: { category: 'Information Science' | 'Computer Engineering' | 'Electronic Engineering' | 'Precision Engineering' | 'Advanced Material Engineering'; created_at: string; features: string[]; hidden_project_code: string; id: string; image_url: string; is_active: boolean; short_description: string; team_name: string; title: string };
+        Insert: { category: 'Information Science' | 'Computer Engineering' | 'Electronic Engineering' | 'Precision Engineering' | 'Advanced Material Engineering'; created_at?: string; features?: string[]; hidden_project_code: string; id?: string; image_url: string; is_active?: boolean; short_description: string; team_name: string; title: string };
         Update: Partial<Database['public']['Tables']['projects']['Insert']>;
         Relationships: [];
       };
@@ -26,6 +26,18 @@ export type Database = {
         Row: { action: string; attempts: number; expires_at: string; fingerprint: string; window_started_at: string };
         Insert: { action: string; attempts?: number; expires_at: string; fingerprint: string; window_started_at: string };
         Update: Partial<Database['public']['Tables']['voter_rate_limits']['Row']>;
+        Relationships: [];
+      };
+      voter_vote_sessions: {
+        Row: { id: string; voting_code_id: string; category: string; created_at: string; expires_at: string };
+        Insert: { id?: string; voting_code_id: string; category: string; created_at?: string; expires_at: string };
+        Update: { expires_at?: string };
+        Relationships: [{ foreignKeyName: 'voter_vote_sessions_voting_code_id_fkey'; columns: ['voting_code_id']; isOneToOne: true; referencedRelation: 'voting_codes'; referencedColumns: ['id'] }];
+      };
+      voter_vote_idempotency: {
+        Row: { idempotency_key: string; voting_session_id: string; project_id: string; vote_id: string | null; created_at: string };
+        Insert: { idempotency_key: string; voting_session_id: string; project_id: string; vote_id?: string | null; created_at?: string };
+        Update: { vote_id?: string | null };
         Relationships: [];
       };
       voting_settings: {
@@ -46,7 +58,9 @@ export type Database = {
       verify_voting_code: { Args: { input_code: string }; Returns: { category: string | null; result: string }[] };
       verify_voter_code: { Args: { input_code: string }; Returns: { category: string; has_voted: boolean; voting_code_id: string }[] };
       check_voter_rate_limit: { Args: { input_action: string; input_fingerprint: string }; Returns: { allowed: boolean; retry_after: number }[] };
-      submit_voter_vote: { Args: { input_project_id: string; input_voting_code_id: string }; Returns: { result: string; vote_id: string | null }[] };
+      start_voter_vote_session: { Args: { input_code: string }; Returns: { result: string; category: string | null; voting_session_id: string | null }[] };
+      submit_voter_vote: { Args: { input_idempotency_key: string; input_project_id: string; input_voting_session_id: string }; Returns: { result: string; vote_id: string | null }[] };
+      cleanup_voter_rate_limit_data: { Args: Record<string, never>; Returns: number };
       admin_live_top_projects: { Args: Record<string, never>; Returns: { rank: number; hidden_project_code: string; category: string; image_url: string; team_name: string; title: string; total_points: number }[] };
     };
     Enums: Record<string, never>;

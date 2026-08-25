@@ -7,7 +7,6 @@ export interface Project {
   id: string;
   title: string;
   shortDescription: string;
-  fullDescription: string;
   category: ProjectCategory;
   teamName: string;
   imageUrl: string;
@@ -17,7 +16,6 @@ export interface Project {
 }
 
 export interface AdminProject extends Project {
-  projectNumber: string;
   hiddenProjectCode: string;
 }
 

@@ -14,6 +14,7 @@
     "test:pin": "npm run test:voter",
     "test:voting-features": "node --experimental-strip-types scripts/check-voting-features.ts",
     "test:voting-db": "node --experimental-strip-types scripts/check-voting-concurrency.ts",
+    "test:voter-reliability": "node --experimental-strip-types scripts/check-voter-rate-limits-and-retries.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

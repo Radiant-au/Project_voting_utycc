@@ -1,23 +1,26 @@
-import { cookies } from 'next/headers';
 import type { NextRequest } from 'next/server';
-import type { VoterCategory } from '@/features/exhibition/data/types';
 import { getVoterSupabase } from '@/lib/supabase/voter-server';
-import { allowRequest, isSameOrigin, isVotingCode, json, normalizeVotingCode } from '@/lib/voter/http';
+import { browserId, setBrowserId } from '@/lib/voter/browser-id';
+import { allowRequest, isSameOrigin, isVotingCode, json, normalizeVotingCode, RateLimitUnavailable } from '@/lib/voter/http';
 import { cookieOptions, createVoterSession, SESSION_SECONDS, signSession, VOTER_COOKIE } from '@/lib/voter/session';
 
 export async function POST(request: NextRequest) {
   try {
     if (!isSameOrigin(request.url, request.headers.get('origin'), request.headers.get('sec-fetch-site'))) return json({ error: 'forbidden' }, 403);
-    const body = await request.json();
+    const browser = browserId(request);
+    const body = await request.json().catch(() => null);
+    const limit = await allowRequest('verify', browser.value);
+    if (!limit.allowed) return setBrowserId(json({ error: 'Too many code attempts. Please wait and try again.', retryAfter: limit.retry_after }, 429, { 'Retry-After': String(limit.retry_after) }), browser);
     const code = normalizeVotingCode(body?.code);
-    if (!isVotingCode(code)) return json({ error: 'invalid_code' }, 400);
-    const limit = await allowRequest(request, 'verify');
-    if (!limit.allowed) return json({ error: 'rate_limited', retryAfter: limit.retry_after }, 429, { 'Retry-After': String(limit.retry_after) });
-    const { data, error } = await getVoterSupabase().rpc('verify_voter_code', { input_code: code });
+    if (!isVotingCode(code)) return setBrowserId(json({ error: 'invalid_code' }, 400), browser);
+    const { data, error } = await getVoterSupabase().rpc('start_voter_vote_session', { input_code: code });
     const row = data?.[0];
-    if (error || !row || !['student','teacher','visitor'].includes(row.category)) return json({ error: 'invalid_code' }, 400);
-    const session = createVoterSession(row.voting_code_id, row.category as VoterCategory, row.has_voted);
-    (await cookies()).set(VOTER_COOKIE, signSession(session), cookieOptions(SESSION_SECONDS));
-    return json({ session: { category: session.category, hasVoted: session.hasVoted } });
-  } catch { return json({ error: 'service_unavailable' }, 503); }
+    if (error || !row || typeof row.category !== 'string' || !['student','teacher','visitor'].includes(row.category)) return setBrowserId(json({ error: 'invalid_code' }, 400), browser);
+    if (row.result === 'used') return setBrowserId(json({ error: 'code_used' }, 409), browser);
+    if (row.result !== 'valid' || !row.voting_session_id) return setBrowserId(json({ error: 'invalid_code' }, 400), browser);
+    const session = createVoterSession(row.voting_session_id as string);
+    const response = setBrowserId(json({ session: { category: row.category, hasVoted: false } }), browser);
+    response.cookies.set(VOTER_COOKIE, signSession(session), cookieOptions(SESSION_SECONDS));
+    return response;
+  } catch (error) { return json({ error: error instanceof RateLimitUnavailable ? 'rate_limit_unavailable' : 'service_unavailable' }, 503); }
 }

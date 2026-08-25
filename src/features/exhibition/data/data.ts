@@ -17,8 +17,8 @@ export const projects: AdminProject[] = [
   ['p10','10','Pocket Pollinators','A pocket-sized habitat kit for balconies and window ledges.','A kit of seed cards, nesting tubes and illustrated instructions helps people make small habitats wherever they live. We tested the kits with neighbours across three apartment blocks.','Advanced Material Engineering','Wild Window','1497250681960-ef046c4e94d2','Urban ecology','Take-home kit'],
   ['p11','11','Language Weather','A forecast made from the words our school uses every day.','We collected anonymous snippets of school language and visualised their mood over a month. The result is a changing weather map that reflects how a community speaks to itself.','Information Science','Word Watch','1499750310107-5fef28a66643','Text analysis','Community research'],
   ['p12','12','Repair Radio','A broadcast studio for fixing things and telling their stories.','Every repaired object has a history. Our pop-up radio station records those histories while teaching basic repair skills, creating a practical archive of how things stay useful.','Computer Engineering','Fixers Collective','1518770660439-4636190af475','Repair culture','Live broadcast'],
-].map(([id, number, title, shortDescription, fullDescription, category, teamName, seed, f1, f2]) => ({
-  id, projectNumber: number, title, shortDescription, fullDescription, category: category as ProjectCategory, teamName,
+].map(([id, number, title, shortDescription, _fullDescription, category, teamName, seed, f1, f2]) => ({
+  id, title, shortDescription, category: category as ProjectCategory, teamName,
   hiddenProjectCode: `PC${String(number).padStart(3, '0')}`,
   imageUrl: projectImageForCode(`PC${number}`), isActive: true, isArchived: false, features: [f1, f2],
 }));

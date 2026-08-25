@@ -13,4 +13,4 @@
 
 - [x] 3.1 Add one focused runnable check that generates PDFs for one and four codes from the real frame and verifies one-page and two-page output respectively.
 - [x] 3.2 Run the focused check, TypeScript typecheck, production build, OpenSpec change validation, and `git diff --check`.
-- [ ] 3.3 Download a four-code PDF from the admin page and visually verify the first page has three aligned QR/code pairs, the second has only the first pair, and a generated QR resolves to its matching `/access?code=<CODE>` URL.
+- [x] 3.3 Download a four-code PDF from the admin page and visually verify the first page has three aligned QR/code pairs, the second has only the first pair, and a generated QR resolves to its matching `/access?code=<CODE>` URL.

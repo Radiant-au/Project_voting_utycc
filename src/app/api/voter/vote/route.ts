@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
 import { getVoterSupabase } from "@/lib/supabase/voter-server";
 import {
@@ -6,8 +5,9 @@ import {
   isProjectId,
   isSameOrigin,
   json,
+  RateLimitUnavailable,
 } from "@/lib/voter/http";
-import { voterSession } from "@/lib/voter/route-session";
+import { signedVoterSession } from "@/lib/voter/route-session";
 import {
   cookieOptions,
   createReceiptSession,
@@ -25,36 +25,38 @@ export async function POST(request: NextRequest) {
     )
   )
     return json({ error: "forbidden" }, 403);
-  const session = await voterSession();
+  const session = await signedVoterSession();
   if (!session) return json({ error: "unauthorized" }, 401);
-  if (session.hasVoted) return json({ error: "vote_rejected" }, 409);
   try {
     const body = await request.json();
     if (!body || Object.keys(body).length !== 1 || !isProjectId(body.projectId))
       return json({ error: "invalid_request" }, 400);
-    const limit = await allowRequest(request, "vote", session.sessionId);
+    const idempotencyKey = request.headers.get("idempotency-key");
+    if (!idempotencyKey || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(idempotencyKey))
+      return json({ error: "invalid_request" }, 400);
+    const limit = await allowRequest("vote", session.sessionId);
     if (!limit.allowed)
       return json(
-        { error: "rate_limited", retryAfter: limit.retry_after },
+        { error: "Too many vote submissions. Please wait and retry.", retryAfter: limit.retry_after },
         429,
         { "Retry-After": String(limit.retry_after) },
       );
     const { data, error } = await getVoterSupabase().rpc("submit_voter_vote", {
-      input_voting_code_id: session.codeId,
+      input_voting_session_id: session.sessionId,
       input_project_id: body.projectId,
+      input_idempotency_key: idempotencyKey,
     });
     const row = data?.[0];
     if (error) return json({ error: "vote_rejected" }, 409);
     if (row?.result === "closed") return json({ error: "voting_closed" }, 409);
+    if (row?.result === "expired") return json({ error: "vote_session_expired" }, 401);
+    if (row?.result === "idempotency_conflict") return json({ error: "idempotency_conflict" }, 409);
     if (row?.result !== "submitted" || !row.vote_id)
       return json({ error: "vote_rejected" }, 409);
-    (await cookies()).set(
-      VOTER_COOKIE,
-      signSession(createReceiptSession(row.vote_id)),
-      cookieOptions(RECEIPT_SECONDS),
-    );
-    return json({ ok: true });
-  } catch {
-    return json({ error: "service_unavailable" }, 503);
+    const response = json({ ok: true });
+    response.cookies.set(VOTER_COOKIE, signSession(createReceiptSession(row.vote_id)), cookieOptions(RECEIPT_SECONDS));
+    return response;
+  } catch (error) {
+    return json({ error: error instanceof RateLimitUnavailable ? "rate_limit_unavailable" : "service_unavailable" }, 503);
   }
 }
