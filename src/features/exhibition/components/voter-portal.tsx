@@ -404,16 +404,22 @@ export function VotingPortalLogoutDialog({
 
 export function GlassProjectCard({
   project,
+  selected,
+  onSelect,
 }: {
   project: Project;
+  selected: boolean;
+  onSelect: () => void;
 }) {
-  const { locale } = useVoterLocale();
+  const { locale, t } = useVoterLocale();
   return (
-    <Link
-      href={`/projects/${project.id}`}
+    <article
       className={cx(
         "group h-full cursor-pointer overflow-hidden rounded-[1.25rem] border border-white/15 bg-linear-to-br from-[#1c294e]/70 to-[#0c1028]/80 shadow-[inset_0_1px_hsl(0_0%_100%/.07),0_16px_35px_hsl(235_85%_3%/.24)] backdrop-blur-md transition hover:-translate-y-[3px] hover:border-cyan-200/40",
+        selected &&
+          "-translate-y-[3px] border-[#69e6ff] shadow-[0_0_0_2px_hsl(188_100%_60%/.12),0_16px_42px_hsl(188_90%_40%/.2)]",
       )}
+      onClick={onSelect}
       data-testid={`card-project-${project.id}`}
     >
       <div className="relative aspect-[1.48] overflow-hidden bg-[#10172e]">
@@ -425,12 +431,18 @@ export function GlassProjectCard({
           sizes="(max-width: 1024px) 50vw, 33vw"
           quality={60}
         />
+        {selected && (
+          <b className="absolute top-2.5 right-2.5 flex items-center gap-1 rounded-full bg-linear-to-r from-[#6c66ff] to-[#29c9e7] px-2 py-1.5 text-[.62rem]">
+            <Check size={16} />
+            {t('project')} · {t('recorded')}
+          </b>
+        )}
       </div>
       <div className="p-4">
         <p className="m-0 text-[.62rem] font-extrabold uppercase tracking-[.08em] text-[#69e6ff]">
           {projectCategoryLabel(project.category, locale)}
         </p>
-        <h3 className="mt-2 break-words text-lg font-bold">{project.title}</h3>
+        <h3 className="mt-2 truncate text-lg font-bold">{project.title}</h3>
         <p className="mt-2 line-clamp-2 text-xs leading-[1.5] text-[#99a7c4]">
           {project.shortDescription}
         </p>
@@ -440,7 +452,7 @@ export function GlassProjectCard({
           </span>
         </footer>
       </div>
-    </Link>
+    </article>
   );
 }
 

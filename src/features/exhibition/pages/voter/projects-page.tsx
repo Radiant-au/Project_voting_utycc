@@ -1,19 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, ShieldCheck } from "lucide-react";
+import Image from "next/image";
+import { Search, ShieldCheck, Zap } from "lucide-react";
 import { projectCategoryOptions } from "../../data/project-categories";
-import { voterApi, type PublicVoterSession } from "../../data/voter-api";
+import { VoterApiError, voterApi, type PublicVoterSession } from "../../data/voter-api";
 import type { Project } from "../../data/types";
 import {
   Badge,
+  Button,
   EmptyState,
   LoadingCard,
+  Modal,
 } from "../../components/ui";
 import {
   GlassNavbar,
   GlassProjectCard,
+  GlassVoteBar,
   VoterStatusBanner,
   VotingPortalLogoutDialog,
   ambient,
@@ -29,7 +33,12 @@ export function ProjectsPage() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");
+  const [selected, setSelected] = useState("");
   const [voted, setVoted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [voteError, setVoteError] = useState("");
+  const voteKey = useRef<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
   const [logout, setLogout] = useState(false);
   const [votingOpen, setVotingOpen] = useState<boolean | null>(null);
 
@@ -56,6 +65,13 @@ export function ProjectsPage() {
     return () => window.removeEventListener("focus", loadStatus);
   }, []);
 
+  useEffect(() => {
+    if (votingOpen !== true) {
+      setSelected("");
+      setConfirming(false);
+    }
+  }, [votingOpen]);
+
   const visible = useMemo(
     () =>
       items.filter(
@@ -69,8 +85,25 @@ export function ProjectsPage() {
       ),
     [items, query, category],
   );
+  const selectedProject = items.find((project) => project.id === selected);
   const exit = () => {
     void voterApi.logout().finally(() => router.replace("/"));
+  };
+  const vote = async () => {
+    if (!selectedProject || submitting || votingOpen !== true) return;
+    setSubmitting(true);
+    setVoteError("");
+    try {
+      voteKey.current ??= crypto.randomUUID();
+      await voterApi.vote(selectedProject.id, voteKey.current);
+      router.replace("/vote/success");
+    } catch (failure) {
+      setSubmitting(false);
+      const reason = failure instanceof Error ? failure.message : "request_failed";
+      if (reason === "voting_closed")
+        setVotingOpen(false);
+      setVoteError(failure instanceof VoterApiError && failure.status === 429 ? `Too many submissions. Please wait ${failure.retryAfter ?? 60} seconds and retry.` : reason === "vote_session_expired" ? "Your voting session expired. Enter your code again." : reason === "vote_rejected" ? "This voting code has already been used." : "We could not confirm the vote. Retry safely; your previous request will not duplicate it.");
+    }
   };
 
   if (!session || loading)
@@ -191,6 +224,12 @@ export function ProjectsPage() {
               >
                 <GlassProjectCard
                   project={project}
+                  selected={selected === project.id}
+                  onSelect={() =>
+                    !voted &&
+                    votingOpen === true &&
+                    (voteKey.current = null, setSelected(selected === project.id ? "" : project.id))
+                  }
                 />
               </div>
             ))}
@@ -208,6 +247,55 @@ export function ProjectsPage() {
           />
         )}
       </div>
+      {selectedProject && !voted && votingOpen === true && (
+        <>
+          <GlassVoteBar
+            project={selectedProject}
+            onCancel={() => { voteKey.current = null; setSelected(""); }}
+            onVote={() => {
+              voteKey.current = null;
+              setVoteError("");
+              setConfirming(true);
+            }}
+          />
+        </>
+      )}
+      {confirming && selectedProject && (
+        <Modal onClose={() => !submitting && setConfirming(false)}>
+          <Image
+            src={selectedProject.imageUrl}
+            alt=""
+            className="h-28 w-full rounded-xl object-cover"
+            width={432}
+            height={112}
+            quality={60}
+          />
+          <h2 className="mt-3 text-2xl font-bold">
+            {t("confirmVote", { title: selectedProject.title })}
+          </h2>
+          <p className="mt-4 flex gap-2 text-sm font-bold text-destructive">
+            <Zap className="shrink-0" size={17} />
+            {t("cannotChange")}
+          </p>
+          {voteError && (
+            <p className="mt-3 text-sm font-bold text-destructive" role="alert">
+              {voteError}
+            </p>
+          )}
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <Button
+              variant="quiet"
+              disabled={submitting}
+              onClick={() => setConfirming(false)}
+            >
+              {t("cancel")}
+            </Button>
+            <Button disabled={submitting} onClick={vote}>
+              {submitting ? t("record") : t("confirm")}
+            </Button>
+          </div>
+        </Modal>
+      )}
       {logout && (
         <VotingPortalLogoutDialog
           onCancel={() => setLogout(false)}
