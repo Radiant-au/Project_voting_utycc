@@ -472,7 +472,7 @@ export function GlassProjectCard({
 }
 
 export function GlassVoteBar({
-  project,
+  project, 
   onCancel,
   onVote,
   busy = false,
