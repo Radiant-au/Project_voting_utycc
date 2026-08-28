@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase/admin-client";
 import { AdminShell, PageIntro } from "../../components/admin";
 import { Button } from "../../components/ui";
 import type { VoterCategory } from "../../data/types";
+import { categoryCodes, selectedCategoryCodes, toggleCategoryCodes } from "./code-selection";
 
 type CodeStatus = "unused" | "used" | "disabled";
 interface VotingCode {
@@ -27,6 +28,7 @@ export function AdminCodesPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [generatingTeacherPdf, setGeneratingTeacherPdf] = useState(false);
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
@@ -74,18 +76,20 @@ export function AdminCodesPage() {
     await load();
   };
 
-  const visitorCodes = codes.filter((item) => item.category === "visitor");
-  const printable = visitorCodes.filter((item) => selected.has(item.code));
+  const visitorCodes = categoryCodes(codes, "visitor");
+  const printable = selectedCategoryCodes(codes, selected, "visitor");
+  const studentCodes = categoryCodes(codes, "student");
+  const printableStudents = selectedCategoryCodes(codes, selected, "student");
+  const teacherCodes = categoryCodes(codes, "teacher");
+  const printableTeachers = selectedCategoryCodes(codes, selected, "teacher");
   const allVisitorsSelected =
     visitorCodes.length > 0 &&
     visitorCodes.every((item) => selected.has(item.code));
-  const toggleAllVisitors = () =>
-    setSelected((current) => {
-      const next = new Set(current);
-      for (const item of visitorCodes)
-        allVisitorsSelected ? next.delete(item.code) : next.add(item.code);
-      return next;
-    });
+  const allStudentsSelected = studentCodes.length > 0 && studentCodes.every((item) => selected.has(item.code));
+  const allTeachersSelected = teacherCodes.length > 0 && teacherCodes.every((item) => selected.has(item.code));
+  const toggleAllVisitors = () => setSelected((current) => toggleCategoryCodes(codes, current, "visitor"));
+  const toggleAllStudents = () => setSelected((current) => toggleCategoryCodes(codes, current, "student"));
+  const toggleAllTeachers = () => setSelected((current) => toggleCategoryCodes(codes, current, "teacher"));
   const downloadVisitorPdf = async () => {
     if (!siteOrigin || !printable.length) return;
     setGeneratingPdf(true);
@@ -113,6 +117,47 @@ export function AdminCodesPage() {
       setError("Could not generate the visitor pass PDF. Please try again.");
     } finally {
       setGeneratingPdf(false);
+    }
+  };
+
+  const downloadStudentCodes = () => {
+    if (!printableStudents.length) return;
+    const url = URL.createObjectURL(
+      new Blob([`Code\r\n${printableStudents.map((item) => item.code).join("\r\n")}`], {
+        type: "text/csv;charset=utf-8",
+      }),
+    );
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "student-voting-codes.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadTeacherPdf = async () => {
+    if (!printableTeachers.length) return;
+    setGeneratingTeacherPdf(true);
+    setError("");
+    try {
+      const template = await fetch("/Teacher_frame.pdf");
+      if (!template.ok) throw new Error("Teacher PDF template is unavailable.");
+      const { generateTeacherPassPdf } = await import("@/lib/teacher-pass-pdf");
+      const bytes = await generateTeacherPassPdf(
+        await template.arrayBuffer(),
+        printableTeachers.map((item) => item.code),
+      );
+      const url = URL.createObjectURL(
+        new Blob([bytes.slice().buffer], { type: "application/pdf" }),
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "teacher-passes.pdf";
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError("Could not generate the teacher pass PDF. Please try again.");
+    } finally {
+      setGeneratingTeacherPdf(false);
     }
   };
 
@@ -196,6 +241,40 @@ export function AdminCodesPage() {
               ? `Clear ${visitorCodes.length} visitors`
               : `Select all ${visitorCodes.length} visitors`}
           </Button>
+          <Button
+            variant="outline"
+            disabled={!studentCodes.length}
+            onClick={toggleAllStudents}
+          >
+            {allStudentsSelected
+              ? `Clear ${studentCodes.length} students`
+              : `Select all ${studentCodes.length} students`}
+          </Button>
+          <Button
+            variant="outline"
+            disabled={!teacherCodes.length}
+            onClick={toggleAllTeachers}
+          >
+            {allTeachersSelected
+              ? `Clear ${teacherCodes.length} teachers`
+              : `Select all ${teacherCodes.length} teachers`}
+          </Button>
+          <Button
+            variant="outline"
+            disabled={!printableTeachers.length || generatingTeacherPdf}
+            onClick={downloadTeacherPdf}
+          >
+            {generatingTeacherPdf
+              ? "Generating teacher PDF…"
+              : `Download ${printableTeachers.length} teacher passes`}
+          </Button>
+          <Button
+            variant="outline"
+            disabled={!printableStudents.length}
+            onClick={downloadStudentCodes}
+          >
+            {`Download ${printableStudents.length} student codes`}
+          </Button>
         </div>
         {error && (
           <p className="mt-4 text-destructive" role="alert">
@@ -206,7 +285,7 @@ export function AdminCodesPage() {
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-border">
-                <th className="p-4">PDF</th>
+                <th className="p-4">Select</th>
                 <th className="p-4">Code</th>
                 <th className="p-4">Category</th>
                 <th className="p-4">Status</th>
@@ -222,8 +301,7 @@ export function AdminCodesPage() {
                   <td className="p-4">
                     <input
                       type="checkbox"
-                      aria-label={`Select ${item.code} for PDF`}
-                      disabled={item.category !== "visitor"}
+                      aria-label={`Select ${item.code} for download`}
                       checked={selected.has(item.code)}
                       onChange={() =>
                         setSelected((current) => {

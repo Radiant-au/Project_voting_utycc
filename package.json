@@ -11,6 +11,7 @@
     "test:vote-history": "node --experimental-strip-types scripts/check-code-vote-history.ts",
     "test:live-reveal": "node --experimental-strip-types scripts/check-live-results-reveal.ts",
     "test:visitor-pdf": "node --experimental-strip-types scripts/check-visitor-pass-pdf.ts",
+    "test:student-code-print": "node --experimental-strip-types scripts/check-student-code-print.ts",
     "test:pin": "npm run test:voter",
     "test:voting-features": "node --experimental-strip-types scripts/check-voting-features.ts",
     "test:voting-db": "node --experimental-strip-types scripts/check-voting-concurrency.ts",
