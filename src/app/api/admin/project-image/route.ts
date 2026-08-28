@@ -24,7 +24,8 @@ export async function POST(request: Request) {
 
   const timestamp = Math.floor(Date.now() / 1000);
   const folder = process.env.CLOUDINARY_PROJECTS_FOLDER || 'project-voting/projects';
-  const signatureSource = `folder=${folder}&timestamp=${timestamp}${apiSecret}`;
+  const transformation = 'c_limit,h_810,w_1200/q_auto';
+  const signatureSource = `folder=${folder}&timestamp=${timestamp}&transformation=${transformation}${apiSecret}`;
   const signature = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(signatureSource));
   const signatureHex = [...new Uint8Array(signature)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
   const body = new FormData();
@@ -32,6 +33,7 @@ export async function POST(request: Request) {
   body.set('api_key', apiKey);
   body.set('timestamp', String(timestamp));
   body.set('folder', folder);
+  body.set('transformation', transformation);
   body.set('signature', signatureHex);
 
   const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: 'POST', body });

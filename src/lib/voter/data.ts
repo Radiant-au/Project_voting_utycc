@@ -6,6 +6,7 @@ import { getVoterSupabase } from '@/lib/supabase/voter-server';
 
 type ProjectRow = DatabaseRow<'projects'>;
 type DatabaseRow<T extends keyof import('@/lib/supabase/database.types').Database['public']['Tables']> = import('@/lib/supabase/database.types').Database['public']['Tables'][T]['Row'];
+const voterImageUrl = (url: string) => url.replace('/image/upload/', '/image/upload/c_limit,h_486,w_720/q_auto/f_auto/');
 
 export const publicProject = (row: ProjectRow): Project => ({
   id: row.id,
@@ -13,7 +14,7 @@ export const publicProject = (row: ProjectRow): Project => ({
   shortDescription: row.short_description,
   category: row.category,
   teamName: row.team_name,
-  imageUrl: row.image_url || projectFallbackImage(row.id),
+  imageUrl: row.image_url ? voterImageUrl(row.image_url) : projectFallbackImage(row.id),
   isActive: row.is_active,
   isArchived: false,
   features: row.features,
@@ -26,6 +27,16 @@ export const getProjects = unstable_cache(async () => {
   if (error) throw error;
   return (data as ProjectRow[]).map(publicProject);
 }, ['public-voter-projects'], { revalidate: 30 });
+
+export const getVotingStatus = unstable_cache(async () => {
+  const { data, error } = await getVoterSupabase()
+    .from('voting_settings')
+    .select('is_open')
+    .eq('id', true)
+    .maybeSingle();
+  if (error || !data) throw new Error('status_unavailable');
+  return data.is_open;
+}, ['voter-status'], { revalidate: 2 });
 
 export async function getProject(id: string) {
   const { data, error } = await getVoterSupabase().from('projects').select(columns).eq('id', id).eq('is_active', true).maybeSingle();

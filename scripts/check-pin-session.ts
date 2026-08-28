@@ -36,7 +36,7 @@ assert.doesNotMatch(voterReceipt, /select\([^)]*points/);
 assert.match(routeSession, /voter_vote_sessions/);
 assert.match(routeSession, /returningVoterSession/);
 assert.match(statusRoute, /signedVoterSession/);
-assert.match(statusRoute, /revalidate: 2/);
+assert.match(voterData, /\['voter-status'\], \{ revalidate: 2 \}/);
 assert.match(voterReceipt, /query\.eq\('voting_code_id', session\.codeId\)/);
 assert.doesNotMatch(voterReceipt, /select\([^)]*(code|points|hidden_project_code)/);
 assert.match(home, /session\.hasVoted \? "\/vote\/success" : "\/projects"/);
