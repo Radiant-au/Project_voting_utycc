@@ -4,10 +4,10 @@ const CODES_PER_PAGE = 4;
 const CODE_FONT_SIZE = 18;
 const BASELINE_ADJUSTMENT = 6.2;
 const slots = [
-  { x: 154.68, y: 577.59 },
-  { x: 462.82, y: 576.37 },
-  { x: 154.49, y: 192.95 },
-  { x: 462.63, y: 188.74 },
+  { x: 154.68, y: 577.59 }, // top-left
+  { x: 462.82, y: 576.37 }, // top-right
+  { x: 154.49, y: 183.45 }, // bottom-left
+  { x: 462.63, y: 183.74 }, // bottom-right
 ] as const;
 
 export async function generateTeacherPassPdf(
@@ -31,7 +31,9 @@ export async function generateTeacherPassPdf(
     const [page] = await output.copyPages(templatePdf, [0]);
     output.addPage(page);
 
-    for (const [index, code] of codes.slice(start, start + CODES_PER_PAGE).entries()) {
+    for (const [index, code] of codes
+      .slice(start, start + CODES_PER_PAGE)
+      .entries()) {
       const slot = slots[index];
       page.drawText(code, {
         x: slot.x - font.widthOfTextAtSize(code, CODE_FONT_SIZE) / 2,
