@@ -11,9 +11,9 @@ export type Database = {
         ];
       };
       voting_codes: {
-        Row: { category: string; code: string; created_at: string; id: string; status: string; used_at: string | null };
-        Insert: { category: string; code: string; created_at?: string; id?: string; status?: string; used_at?: string | null };
-        Update: { category?: string; code?: string; created_at?: string; id?: string; status?: string; used_at?: string | null };
+        Row: { category: string; code: string; created_at: string; id: string; is_printed: boolean; status: string; used_at: string | null };
+        Insert: { category: string; code: string; created_at?: string; id?: string; is_printed?: boolean; status?: string; used_at?: string | null };
+        Update: { category?: string; code?: string; created_at?: string; id?: string; is_printed?: boolean; status?: string; used_at?: string | null };
         Relationships: [];
       };
       projects: {
@@ -52,7 +52,9 @@ export type Database = {
       disable_voting_code: { Args: { input_code: string }; Returns: boolean };
       generate_voting_codes: { Args: { input_category: string; input_count: number }; Returns: Database['public']['Tables']['voting_codes']['Row'][] };
       is_voting_admin: { Args: Record<string, never>; Returns: boolean };
-      list_voting_codes: { Args: { input_category?: string | null; input_status?: string | null }; Returns: Database['public']['Tables']['voting_codes']['Row'][] };
+      list_voting_codes: { Args: { input_category?: string | null; input_is_printed?: boolean | null; input_query?: string | null; input_status?: string | null }; Returns: Database['public']['Tables']['voting_codes']['Row'][] };
+      replace_printed_voting_codes: { Args: { input_student_codes: string[]; input_visitor_codes: string[] }; Returns: undefined };
+      set_voting_code_printed: { Args: { input_code: string; input_is_printed: boolean }; Returns: boolean };
       list_code_vote_history: { Args: { input_query?: string | null; input_category?: string | null; input_status?: string | null }; Returns: { voting_code_id: string; code: string; category: string; status: string; vote_id: string | null; voted_at: string | null; project_id: string | null; project_title: string | null }[] };
       submit_vote: { Args: { input_code: string; input_project_id: string }; Returns: { result: string; vote_id: string | null }[] };
       verify_voting_code: { Args: { input_code: string }; Returns: { category: string | null; result: string }[] };

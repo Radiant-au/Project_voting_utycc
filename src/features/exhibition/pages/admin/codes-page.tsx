@@ -13,6 +13,7 @@ interface VotingCode {
   code: string;
   category: VoterCategory;
   status: CodeStatus;
+  is_printed: boolean;
   created_at: string;
   used_at: string | null;
 }
@@ -26,10 +27,13 @@ export function AdminCodesPage() {
   const [count, setCount] = useState(800);
   const [categoryFilter, setCategoryFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [printedFilter, setPrintedFilter] = useState("");
+  const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [generatingTeacherPdf, setGeneratingTeacherPdf] = useState(false);
+  const [updatingPrintedCode, setUpdatingPrintedCode] = useState("");
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
@@ -42,6 +46,8 @@ export function AdminCodesPage() {
         supabase.rpc("list_voting_codes", {
           input_category,
           input_status: statusFilter || null,
+          input_query: query || null,
+          input_is_printed: printedFilter ? printedFilter === "printed" : null,
         }),
       ),
     );
@@ -51,7 +57,7 @@ export function AdminCodesPage() {
       return;
     }
     setCodes(results.flatMap(({ data }) => (data ?? [])) as VotingCode[]);
-  }, [categoryFilter, statusFilter]);
+  }, [categoryFilter, printedFilter, query, statusFilter]);
 
   useEffect(() => {
     load();
@@ -80,6 +86,21 @@ export function AdminCodesPage() {
     );
     if (rpcError || !data) {
       setError(rpcError?.message ?? "Only unused codes can be disabled.");
+      return;
+    }
+    await load();
+  };
+
+  const togglePrinted = async (code: string, isPrinted: boolean) => {
+    setUpdatingPrintedCode(code);
+    setError("");
+    const { data, error: rpcError } = await supabase.rpc(
+      "set_voting_code_printed",
+      { input_code: code, input_is_printed: !isPrinted },
+    );
+    setUpdatingPrintedCode("");
+    if (rpcError || !data) {
+      setError(rpcError?.message ?? "Could not update printed status.");
       return;
     }
     await load();
@@ -233,6 +254,23 @@ export function AdminCodesPage() {
             <option value="teacher">Teacher</option>
             <option value="visitor">Visitor</option>
           </select>
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value.toUpperCase())}
+            placeholder="Find code"
+            className="rounded-xl border border-border bg-card p-3"
+            aria-label="Find voting code"
+          />
+          <select
+            value={printedFilter}
+            onChange={(event) => setPrintedFilter(event.target.value)}
+            className="rounded-xl border border-border bg-card p-3"
+            aria-label="Printed status"
+          >
+            <option value="">All print states</option>
+            <option value="printed">Printed</option>
+            <option value="not-printed">Not printed</option>
+          </select>
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
@@ -300,6 +338,7 @@ export function AdminCodesPage() {
                 <th className="p-4">Code</th>
                 <th className="p-4">Category</th>
                 <th className="p-4">Status</th>
+                <th className="p-4">Printed</th>
                 <th className="p-4">Action</th>
               </tr>
             </thead>
@@ -328,6 +367,15 @@ export function AdminCodesPage() {
                   <td className="p-4 font-mono font-bold">{item.code}</td>
                   <td className="p-4 capitalize">{item.category}</td>
                   <td className="p-4 capitalize">{item.status}</td>
+                  <td className="p-4">
+                    <input
+                      type="checkbox"
+                      checked={item.is_printed}
+                      disabled={updatingPrintedCode === item.code}
+                      onChange={() => void togglePrinted(item.code, item.is_printed)}
+                      aria-label={`Mark ${item.code} as printed`}
+                    />
+                  </td>
                   <td className="p-4">
                     {item.status === "unused" && (
                       <button

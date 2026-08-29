@@ -12,6 +12,8 @@
     "test:live-reveal": "node --experimental-strip-types scripts/check-live-results-reveal.ts",
     "test:visitor-pdf": "node --experimental-strip-types scripts/check-visitor-pass-pdf.ts",
     "test:student-code-print": "node --experimental-strip-types scripts/check-student-code-print.ts",
+    "test:printed-code-management": "node --experimental-strip-types scripts/check-printed-code-management.ts",
+    "import:printed-codes": "node --experimental-strip-types scripts/import-printed-voting-codes.ts --confirm-reset",
     "test:pin": "npm run test:voter",
     "test:voting-features": "node --experimental-strip-types scripts/check-voting-features.ts",
     "test:voting-db": "node --experimental-strip-types scripts/check-voting-concurrency.ts",
