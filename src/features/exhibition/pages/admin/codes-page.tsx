@@ -18,11 +18,12 @@ interface VotingCode {
 }
 
 const siteOrigin = process.env.NEXT_PUBLIC_SITE_ORIGIN?.replace(/\/$/, "");
+const minimumCodes = { student: 800, visitor: 100, teacher: 90 } as const;
 
 export function AdminCodesPage() {
   const [codes, setCodes] = useState<VotingCode[]>([]);
-  const [category, setCategory] = useState<VoterCategory>("visitor");
-  const [count, setCount] = useState(10);
+  const [category, setCategory] = useState<VoterCategory>("student");
+  const [count, setCount] = useState(800);
   const [categoryFilter, setCategoryFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -33,15 +34,23 @@ export function AdminCodesPage() {
 
   const load = useCallback(async () => {
     setError("");
-    const { data, error: rpcError } = await supabase.rpc("list_voting_codes", {
-      input_category: categoryFilter || null,
-      input_status: statusFilter || null,
-    });
+    const categories = categoryFilter
+      ? [categoryFilter]
+      : ["student", "teacher", "visitor"];
+    const results = await Promise.all(
+      categories.map((input_category) =>
+        supabase.rpc("list_voting_codes", {
+          input_category,
+          input_status: statusFilter || null,
+        }),
+      ),
+    );
+    const rpcError = results.find((result) => result.error)?.error;
     if (rpcError) {
       setError(rpcError.message);
       return;
     }
-    setCodes((data ?? []) as VotingCode[]);
+    setCodes(results.flatMap(({ data }) => (data ?? [])) as VotingCode[]);
   }, [categoryFilter, statusFilter]);
 
   useEffect(() => {
@@ -169,9 +178,11 @@ export function AdminCodesPage() {
           <div className="grid gap-3 sm:grid-cols-4">
             <select
               value={category}
-              onChange={(event) =>
-                setCategory(event.target.value as VoterCategory)
-              }
+              onChange={(event) => {
+                const nextCategory = event.target.value as VoterCategory;
+                setCategory(nextCategory);
+                setCount(minimumCodes[nextCategory]);
+              }}
               className="rounded-xl border border-border bg-background p-3"
             >
               <option value="student">Student</option>
@@ -181,14 +192,14 @@ export function AdminCodesPage() {
             <input
               type="number"
               min="1"
-              max="100"
+              max="800"
               value={count}
               onChange={(event) => setCount(Number(event.target.value))}
               className="rounded-xl border border-border bg-background p-3"
               aria-label="Number of codes"
             />
             <Button
-              disabled={busy || count < 1 || count > 100}
+              disabled={busy || count < 1 || count > 800}
               onClick={generate}
             >
               {busy ? "Generating…" : "Generate codes"}
