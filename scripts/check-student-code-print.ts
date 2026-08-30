@@ -1,19 +1,22 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { categoryCodes, selectedCategoryCodes, toggleCategoryCodes } from '../src/features/exhibition/pages/admin/code-selection.ts';
+import { categoryCodes, selectedCategoryCodes, toggleCategoryCodes, unprintedCategoryCodes } from '../src/features/exhibition/pages/admin/code-selection.ts';
 
 const codes = [
-  { code: 'STUDENT', category: 'student' as const },
-  { code: 'STUD002', category: 'student' as const },
-  { code: 'VISITOR', category: 'visitor' as const },
+  { code: 'STUDENT', category: 'student' as const, is_printed: false },
+  { code: 'STUD002', category: 'student' as const, is_printed: false },
+  { code: 'PRINTED', category: 'student' as const, is_printed: true },
+  { code: 'VISITOR', category: 'visitor' as const, is_printed: false },
 ];
 const selected = new Set(['VISITOR']);
-const allStudents = toggleCategoryCodes(codes, selected, 'student');
+const unprintedStudents = unprintedCategoryCodes(codes, 'student');
+const allStudents = toggleCategoryCodes(unprintedStudents, selected, 'student');
 
 assert.deepEqual([...selectedCategoryCodes(codes, allStudents, 'student')].map(({ code }) => code), ['STUDENT', 'STUD002']);
 assert.ok(allStudents.has('VISITOR'));
-assert.deepEqual([...toggleCategoryCodes(codes, allStudents, 'student')], ['VISITOR']);
-assert.equal(categoryCodes(codes, 'student').length, 2);
+assert.deepEqual([...toggleCategoryCodes(unprintedStudents, allStudents, 'student')], ['VISITOR']);
+assert.equal(categoryCodes(codes, 'student').length, 3);
+assert.deepEqual(unprintedCategoryCodes(codes, 'student').map(({ code }) => code), ['STUDENT', 'STUD002']);
 const page = readFileSync('src/features/exhibition/pages/admin/codes-page.tsx', 'utf8');
 assert.match(page, /student-voting-codes\.csv/);
 assert.match(page, /Code\\r\\n/);

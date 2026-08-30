@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase/admin-client";
 import { AdminShell, PageIntro } from "../../components/admin";
 import { Button } from "../../components/ui";
 import type { VoterCategory } from "../../data/types";
-import { categoryCodes, selectedCategoryCodes, toggleCategoryCodes } from "./code-selection";
+import { selectedCategoryCodes, toggleCategoryCodes, unprintedCategoryCodes } from "./code-selection";
 
 type CodeStatus = "unused" | "used" | "disabled";
 interface VotingCode {
@@ -106,20 +106,20 @@ export function AdminCodesPage() {
     await load();
   };
 
-  const visitorCodes = categoryCodes(codes, "visitor");
+  const visitorCodes = unprintedCategoryCodes(codes, "visitor");
   const printable = selectedCategoryCodes(codes, selected, "visitor");
-  const studentCodes = categoryCodes(codes, "student");
+  const studentCodes = unprintedCategoryCodes(codes, "student");
   const printableStudents = selectedCategoryCodes(codes, selected, "student");
-  const teacherCodes = categoryCodes(codes, "teacher");
+  const teacherCodes = unprintedCategoryCodes(codes, "teacher");
   const printableTeachers = selectedCategoryCodes(codes, selected, "teacher");
   const allVisitorsSelected =
     visitorCodes.length > 0 &&
     visitorCodes.every((item) => selected.has(item.code));
   const allStudentsSelected = studentCodes.length > 0 && studentCodes.every((item) => selected.has(item.code));
   const allTeachersSelected = teacherCodes.length > 0 && teacherCodes.every((item) => selected.has(item.code));
-  const toggleAllVisitors = () => setSelected((current) => toggleCategoryCodes(codes, current, "visitor"));
-  const toggleAllStudents = () => setSelected((current) => toggleCategoryCodes(codes, current, "student"));
-  const toggleAllTeachers = () => setSelected((current) => toggleCategoryCodes(codes, current, "teacher"));
+  const toggleAllVisitors = () => setSelected((current) => toggleCategoryCodes(visitorCodes, current, "visitor"));
+  const toggleAllStudents = () => setSelected((current) => toggleCategoryCodes(studentCodes, current, "student"));
+  const toggleAllTeachers = () => setSelected((current) => toggleCategoryCodes(teacherCodes, current, "teacher"));
   const downloadVisitorPdf = async () => {
     if (!siteOrigin || !printable.length) return;
     setGeneratingPdf(true);
